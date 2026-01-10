@@ -1,0 +1,140 @@
+import { z } from "zod";
+import { PLATFORMS, SENTIMENTS, RESPONSE_TONES, VALIDATION_LIMITS } from "./constants";
+
+/**
+ * Zod validation schemas for ReviewFlow
+ */
+
+// Auth schemas
+export const signUpSchema = z.object({
+  email: z
+    .string()
+    .email("Please enter a valid email address")
+    .max(VALIDATION_LIMITS.EMAIL_MAX, "Email is too long"),
+  password: z
+    .string()
+    .min(VALIDATION_LIMITS.PASSWORD_MIN, `Password must be at least ${VALIDATION_LIMITS.PASSWORD_MIN} characters`)
+    .max(VALIDATION_LIMITS.PASSWORD_MAX, "Password is too long")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    ),
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(VALIDATION_LIMITS.NAME_MAX, "Name is too long"),
+});
+
+export const signInSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  password: z
+    .string()
+    .min(VALIDATION_LIMITS.PASSWORD_MIN, `Password must be at least ${VALIDATION_LIMITS.PASSWORD_MIN} characters`)
+    .max(VALIDATION_LIMITS.PASSWORD_MAX, "Password is too long")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    ),
+});
+
+// Review schemas
+export const createReviewSchema = z.object({
+  platform: z.enum(PLATFORMS, {
+    errorMap: () => ({ message: "Please select a valid platform" }),
+  }),
+  reviewText: z
+    .string()
+    .min(VALIDATION_LIMITS.REVIEW_TEXT_MIN, "Review text is required")
+    .max(VALIDATION_LIMITS.REVIEW_TEXT_MAX, `Review text must be under ${VALIDATION_LIMITS.REVIEW_TEXT_MAX} characters`),
+  rating: z.number().min(1).max(5).optional().nullable(),
+  reviewerName: z.string().max(100).optional().nullable(),
+  reviewDate: z.string().datetime().optional().nullable(),
+  detectedLanguage: z.string().optional(),
+});
+
+export const updateReviewSchema = z.object({
+  platform: z.enum(PLATFORMS).optional(),
+  reviewText: z
+    .string()
+    .min(VALIDATION_LIMITS.REVIEW_TEXT_MIN)
+    .max(VALIDATION_LIMITS.REVIEW_TEXT_MAX)
+    .optional(),
+  rating: z.number().min(1).max(5).optional().nullable(),
+  reviewerName: z.string().max(100).optional().nullable(),
+  reviewDate: z.string().datetime().optional().nullable(),
+  detectedLanguage: z.string().optional(),
+});
+
+// Response schemas
+export const generateResponseSchema = z.object({
+  reviewId: z.string().cuid("Invalid review ID"),
+  tone: z.enum(RESPONSE_TONES).optional().default("professional"),
+});
+
+export const regenerateResponseSchema = z.object({
+  responseId: z.string().cuid("Invalid response ID"),
+  tone: z.enum(RESPONSE_TONES),
+});
+
+export const updateResponseSchema = z.object({
+  responseText: z
+    .string()
+    .min(1, "Response text is required")
+    .max(VALIDATION_LIMITS.RESPONSE_TEXT_MAX, `Response must be under ${VALIDATION_LIMITS.RESPONSE_TEXT_MAX} characters`),
+});
+
+// Brand voice schemas
+export const brandVoiceSchema = z.object({
+  tone: z.string().min(1, "Tone is required").max(50),
+  formality: z.number().min(1).max(5),
+  keyPhrases: z.array(z.string().max(100)).max(10).optional().default([]),
+  avoidPhrases: z.array(z.string().max(100)).max(10).optional().default([]),
+  styleNotes: z.string().max(500).optional().nullable(),
+  signatureClosing: z.string().max(100).optional().nullable(),
+});
+
+// User profile schemas
+export const updateProfileSchema = z.object({
+  name: z.string().min(1).max(VALIDATION_LIMITS.NAME_MAX).optional(),
+  businessName: z.string().max(200).optional().nullable(),
+});
+
+// Pagination schema
+export const paginationSchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+});
+
+// Filter schemas
+export const reviewFiltersSchema = z.object({
+  platform: z.enum(PLATFORMS).optional(),
+  sentiment: z.enum(SENTIMENTS).optional(),
+  hasResponse: z.boolean().optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  search: z.string().max(100).optional(),
+});
+
+// Type exports
+export type SignUpInput = z.infer<typeof signUpSchema>;
+export type SignInInput = z.infer<typeof signInSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type CreateReviewInput = z.infer<typeof createReviewSchema>;
+export type UpdateReviewInput = z.infer<typeof updateReviewSchema>;
+export type GenerateResponseInput = z.infer<typeof generateResponseSchema>;
+export type RegenerateResponseInput = z.infer<typeof regenerateResponseSchema>;
+export type UpdateResponseInput = z.infer<typeof updateResponseSchema>;
+export type BrandVoiceInput = z.infer<typeof brandVoiceSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type PaginationInput = z.infer<typeof paginationSchema>;
+export type ReviewFiltersInput = z.infer<typeof reviewFiltersSchema>;

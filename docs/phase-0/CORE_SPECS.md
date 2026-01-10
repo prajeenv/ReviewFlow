@@ -1,0 +1,525 @@
+# ReviewFlow: Core Specifications (Condensed)
+**Version:** 1.0 | **Phase:** MVP | **Timeline:** Weeks 1-2
+
+---
+
+## Product Overview
+
+**ReviewFlow** = AI-powered review response management platform for SMBs. Supports 40+ languages, multiple platforms (Google, Amazon, Shopify, Trustpilot, etc.), generates brand-aligned responses using Claude AI.
+
+**Core Loop:**
+Reviews added → AI generates response in same language → User edits (optional) → User approves → User publishes
+
+**Success Metrics:** Responses posted/week, edit rate, time saved, user retention (week 4)
+
+**MVP Scope (Phase 1):**
+✅ Auth (email/password, Google OAuth), manual review input, AI response generation, brand voice configuration, credit tracking, sentiment analysis (DeepSeek), multi-language (40+ languages)
+
+❌ NOT Phase 1: CSV import, platform integrations, payment processing, team collaboration, advanced analytics, mobile app
+
+---
+
+## Pricing Tiers
+
+| Tier | Price | Credits | Sentiment Quota |
+|------|-------|---------|-----------------|
+| FREE | $0 | 15/month | 35/month |
+| STARTER | $29/month | 60/month | 150/month |
+| GROWTH | $79/month | 200/month | 500/month |
+
+**Credit Costs:**
+- Response generation: 1.0 credits
+- Response regeneration: 0.5 credits  
+- Sentiment analysis: 0.3 credits (counted against sentiment quota, not credits)
+
+---
+
+## Database Schema (Prisma)
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTHENTICATION
+// ============================================
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  emailVerified       DateTime?
+  name                String?
+  image               String?
+  password            String?   // bcrypt hashed, null if OAuth only
+  
+  // Subscription & Credits
+  tier                Tier      @default(FREE)
+  credits             Int       @default(15)
+  creditsResetDate    DateTime  @default(now())
+  sentimentQuota      Int       @default(35)
+  sentimentUsed       Int       @default(0)
+  sentimentResetDate  DateTime  @default(now())
+  
+  // Timestamps
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  // Relations
+  reviews             Review[]
+  brandVoice          BrandVoice?
+  creditUsage         CreditUsage[]
+  sentimentUsage      SentimentUsage[]
+  sessions            Session[]
+  accounts            Account[]
+  
+  @@index([email])
+  @@index([tier])
+  @@map("users")
+}
+
+enum Tier {
+  FREE
+  STARTER
+  GROWTH
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String  // "oauth" | "email"
+  provider          String  // "google" | "credentials"
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// BRAND VOICE
+// ============================================
+
+model BrandVoice {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tone            String   @default("professional")  // "friendly" | "professional" | "casual" | "formal"
+  formality       Int      @default(3)               // 1-5 scale
+  keyPhrases      String[] @default([])
+  styleNotes      String?  @db.Text
+  sampleResponses String[] @default([])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@map("brand_voices")
+}
+
+// ============================================
+// REVIEWS & RESPONSES
+// ============================================
+
+model Review {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  platform        String                    // "google" | "amazon" | "shopify" | "trustpilot" | "other"
+  reviewText      String    @db.Text        // 1-2000 chars
+  rating          Int?                      // 1-5 stars, nullable
+  reviewerName    String?
+  reviewDate      DateTime?
+  
+  detectedLanguage String   @default("English")
+  sentiment       String?                   // "positive" | "neutral" | "negative" | null
+  
+  externalId      String?
+  externalUrl     String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  response        ReviewResponse?
+  creditUsage     CreditUsage[]
+  sentimentUsage  SentimentUsage[]
+  
+  @@index([userId, createdAt])
+  @@index([platform])
+  @@index([sentiment])
+  @@map("reviews")
+}
+
+model ReviewResponse {
+  id              String   @id @default(cuid())
+  reviewId        String   @unique
+  review          Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  
+  responseText    String   @db.Text        // Max 500 chars
+  isEdited        Boolean  @default(false)
+  editedAt        DateTime?
+  
+  creditsUsed     Int      @default(1)
+  toneUsed        String   @default("default")
+  generationModel String   @default("claude-sonnet-4-20250514")
+  
+  isPublished     Boolean  @default(false)
+  publishedAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  versions        ResponseVersion[]
+  creditUsage     CreditUsage[]
+  
+  @@index([reviewId])
+  @@index([isPublished])
+  @@map("review_responses")
+}
+
+model ResponseVersion {
+  id                String   @id @default(cuid())
+  reviewResponseId  String
+  reviewResponse    ReviewResponse @relation(fields: [reviewResponseId], references: [id], onDelete: Cascade)
+  
+  responseText      String   @db.Text
+  toneUsed          String
+  creditsUsed       Int      @default(1)
+  
+  createdAt         DateTime @default(now())
+  
+  @@index([reviewResponseId, createdAt])
+  @@map("response_versions")
+}
+
+// ============================================
+// AUDIT TRAILS
+// ============================================
+
+model CreditUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  reviewId          String?
+  review            Review?          @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+  
+  reviewResponseId  String?
+  reviewResponse    ReviewResponse?  @relation(fields: [reviewResponseId], references: [id], onDelete: SetNull)
+  
+  creditsUsed Int      @default(1)          // Negative for refunds
+  action      String                        // "GENERATE_RESPONSE" | "REGENERATE" | "REFUND"
+  
+  // Audit trail survives deletion (SET NULL relationships)
+  // Anonymized on GDPR deletion (PII redacted, structure preserved)
+  details     String?  @db.Text             // JSON: { reviewSnapshot, responseSnapshot, metadata, anonymized? }
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([action])
+  @@map("credit_usage")
+}
+
+model SentimentUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  reviewId  String?
+  review    Review?  @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+  
+  sentiment String   // "positive" | "neutral" | "negative"
+  
+  // Audit trail survives deletion, anonymized on GDPR deletion
+  details   String?  @db.Text  // JSON: { platform, rating, preview (100 chars), analyzedAt, anonymized? }
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([sentiment])
+  @@map("sentiment_usage")
+}
+```
+
+---
+
+## API Endpoints
+
+**Base URL:** `/api/v1`  
+**Authentication:** Bearer token (JWT) via NextAuth.js  
+**Format:** JSON request/response
+
+### Authentication
+
+```
+POST   /auth/signup           → Create account
+POST   /auth/login            → Authenticate
+POST   /auth/logout           → Invalidate session
+POST   /auth/password-reset/request   → Request reset email
+POST   /auth/password-reset/confirm   → Reset password with token
+GET    /auth/verify-email/:token      → Verify email
+```
+
+### User Management
+
+```
+GET    /user/profile          → Get current user
+PUT    /user/profile          → Update profile
+DELETE /user/account          → Delete account (GDPR)
+GET    /user/data-export      → Export all data (GDPR)
+```
+
+### Reviews
+
+```
+POST   /reviews               → Add review
+GET    /reviews               → List reviews (paginated)
+GET    /reviews/:id           → Get single review
+PUT    /reviews/:id           → Update review
+DELETE /reviews/:id           → Delete review
+```
+
+### Response Generation
+
+```
+POST   /reviews/:id/generate  → Generate AI response
+POST   /reviews/:id/regenerate → Regenerate with different tone
+PUT    /reviews/:id/response  → Edit response
+POST   /reviews/:id/publish   → Approve/publish response
+DELETE /reviews/:id/response  → Delete response
+GET    /reviews/:id/versions  → Get version history
+```
+
+### Brand Voice
+
+```
+GET    /brand-voice           → Get current brand voice
+PUT    /brand-voice           → Update brand voice
+POST   /brand-voice/test      → Test with sample review
+```
+
+### Credits & Analytics
+
+```
+GET    /credits               → Get credit balance
+GET    /credits/usage         → Get usage history
+GET    /sentiment/usage       → Get sentiment quota usage
+```
+
+---
+
+## API Request/Response Formats
+
+### POST /reviews
+```typescript
+// Request
+{
+  "platform": "google",        // Required: "google" | "amazon" | "shopify" | "trustpilot" | "other"
+  "reviewText": string,        // Required, 1-2000 chars
+  "rating"?: number,           // Optional, 1-5
+  "reviewerName"?: string,
+  "reviewDate"?: string,       // ISO 8601
+  "externalId"?: string,
+  "externalUrl"?: string
+}
+
+// Response 201
+{
+  "success": true,
+  "data": {
+    "review": {
+      "id": "review_abc123",
+      "platform": "google",
+      "reviewText": "Great service!",
+      "rating": 5,
+      "detectedLanguage": "English",
+      "sentiment": "positive",
+      "createdAt": "2026-01-08T10:30:00Z"
+    }
+  }
+}
+```
+
+### POST /reviews/:id/generate
+```typescript
+// Request
+{
+  "tone"?: "professional" | "friendly" | "empathetic" | "default"
+}
+
+// Response 200
+{
+  "success": true,
+  "data": {
+    "response": {
+      "id": "response_xyz789",
+      "reviewId": "review_abc123",
+      "responseText": "Thank you for your wonderful feedback!...",
+      "creditsUsed": 1,
+      "toneUsed": "professional",
+      "generationModel": "claude-sonnet-4-20250514",
+      "createdAt": "2026-01-08T10:31:00Z"
+    },
+    "creditsRemaining": 14
+  }
+}
+
+// Error 402 - Insufficient credits
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_CREDITS",
+    "message": "You have 0 credits remaining",
+    "details": {
+      "creditsNeeded": 1,
+      "creditsAvailable": 0,
+      "resetDate": "2026-02-01T00:00:00Z"
+    }
+  }
+}
+```
+
+### GET /credits
+```typescript
+// Response 200
+{
+  "success": true,
+  "data": {
+    "credits": {
+      "remaining": 12,
+      "total": 15,
+      "used": 3,
+      "resetDate": "2026-02-01T00:00:00Z"
+    },
+    "sentiment": {
+      "remaining": 27,
+      "total": 35,
+      "used": 8,
+      "resetDate": "2026-02-01T00:00:00Z"
+    },
+    "tier": "FREE"
+  }
+}
+```
+
+---
+
+## Error Response Format
+
+```typescript
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",               // Machine-readable
+    "message": "Human-readable message",
+    "details"?: { ... }                 // Optional additional context
+  }
+}
+```
+
+**Common Error Codes:**
+- `UNAUTHORIZED` (401): Invalid/missing token
+- `FORBIDDEN` (403): Valid token, insufficient permissions
+- `NOT_FOUND` (404): Resource doesn't exist
+- `VALIDATION_ERROR` (400): Invalid input
+- `INSUFFICIENT_CREDITS` (402): Not enough credits
+- `RATE_LIMIT_EXCEEDED` (429): Too many requests
+- `INTERNAL_ERROR` (500): Server error
+
+---
+
+## Validation Rules
+
+### User
+- Email: valid format, unique
+- Password: min 8 chars (email/password auth)
+- Credits: 0-1000 (cannot go negative)
+
+### Review
+- reviewText: 1-2000 chars
+- rating: 1-5 or null
+- platform: one of allowed values
+- detectedLanguage: auto-detected, user can override
+
+### ReviewResponse
+- responseText: 1-500 chars
+- creditsUsed: positive integer
+- isPublished: boolean
+
+### BrandVoice
+- tone: "friendly" | "professional" | "casual" | "formal"
+- formality: 1-5 integer
+- keyPhrases: array of strings, max 20 items
+- sampleResponses: array of strings, max 5 items
+
+---
+
+## Constants
+
+```typescript
+// Tier limits
+const TIER_LIMITS = {
+  FREE: { credits: 15, sentiment: 35 },
+  STARTER: { credits: 60, sentiment: 150 },
+  GROWTH: { credits: 200, sentiment: 500 }
+};
+
+// Credit costs
+const CREDIT_COSTS = {
+  RESPONSE_GENERATION: 1.0,
+  RESPONSE_REGENERATION: 0.5,
+  SENTIMENT_ANALYSIS: 0.3  // Counted against sentiment quota
+};
+
+// Supported platforms
+const PLATFORMS = [
+  "google",
+  "amazon",
+  "shopify",
+  "trustpilot",
+  "facebook",
+  "yelp",
+  "other"
+];
+
+// Sentiments
+const SENTIMENTS = ["positive", "neutral", "negative"];
+```

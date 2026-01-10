@@ -1,0 +1,19 @@
+// This is a placeholder schema file.
+// The complete schema will be implemented in Prompt 2.
+// For now, we need this for Prisma to generate the client.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Placeholder model - will be replaced in Prompt 2
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+}

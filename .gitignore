@@ -1,0 +1,77 @@
+# ===========================================
+# ReviewFlow .gitignore
+# ===========================================
+
+# Environment variables - Never commit secrets!
+
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+.nyc_output
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+/dist
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment variables - NEVER COMMIT THESE
+.env
+.env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Prisma
+prisma/migrations/.migration_lock.toml
+
+# Credentials and secrets
+*.pem
+*.key
+*.crt
+credentials.json
+service-account.json
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# ===========================================
+# When to Revisit:
+# Add more to .gitignore when you:
+# - Add file uploads → Add /uploads/ or /public/uploads/
+# - Add testing → Add test output directories
+# - Generate a lot of temp files → Add those specific patterns
+# - Notice unwanted files in git status → Add them then
+# ===========================================
