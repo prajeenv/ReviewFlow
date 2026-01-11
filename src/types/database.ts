@@ -1,148 +1,229 @@
 /**
- * Database-related types (mirrors Prisma schema)
- * These will be replaced by Prisma-generated types after schema setup
+ * Database-related types
+ * Re-exports Prisma-generated types with custom extensions
  */
 
-import type { Sentiment, Platform, SubscriptionTier, ResponseTone } from "@/lib/constants";
+// Re-export all Prisma-generated types
+export type {
+  User,
+  Account,
+  Session,
+  VerificationToken,
+  BrandVoice,
+  Review,
+  ReviewResponse,
+  ResponseVersion,
+  CreditUsage,
+  SentimentUsage,
+  Tier,
+} from "@prisma/client";
 
-// User model
-export interface User {
-  id: string;
-  email: string;
-  passwordHash: string | null;
-  name: string | null;
-  businessName: string | null;
-  tier: SubscriptionTier;
-  credits: number;
-  creditsResetDate: Date | null;
-  sentimentUsed: number;
-  sentimentQuota: number;
-  sentimentResetDate: Date | null;
-  emailVerified: Date | null;
-  emailVerificationToken: string | null;
-  emailVerificationExpires: Date | null;
-  passwordResetToken: string | null;
-  passwordResetExpires: Date | null;
-  failedLoginAttempts: number;
-  lockedUntil: Date | null;
-  deletedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+// Import for use in custom types
+import type {
+  User,
+  BrandVoice,
+  Review,
+  ReviewResponse,
+  ResponseVersion,
+  CreditUsage,
+  SentimentUsage,
+} from "@prisma/client";
+
+// ============================================
+// COMPOSITE TYPES (with relations)
+// ============================================
+
+/**
+ * User with all related data
+ */
+export interface UserWithRelations extends User {
+  brandVoice: BrandVoice | null;
+  reviews: Review[];
+  creditUsage: CreditUsage[];
+  sentimentUsage: SentimentUsage[];
 }
 
-// Review model
-export interface Review {
-  id: string;
-  userId: string;
-  platform: Platform;
-  reviewText: string;
-  rating: number | null;
-  reviewerName: string | null;
-  reviewDate: Date | null;
-  detectedLanguage: string;
-  sentiment: Sentiment | null;
-  deletedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+/**
+ * User with just brand voice
+ */
+export interface UserWithBrandVoice extends User {
+  brandVoice: BrandVoice | null;
 }
 
-// ReviewResponse model
-export interface ReviewResponse {
-  id: string;
-  reviewId: string;
-  responseText: string;
-  tone: ResponseTone;
-  isEdited: boolean;
-  editedAt: Date | null;
-  isApproved: boolean;
-  approvedAt: Date | null;
-  deletedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// ResponseVersion model
-export interface ResponseVersion {
-  id: string;
-  responseId: string;
-  versionNumber: number;
-  responseText: string;
-  tone: ResponseTone;
-  createdAt: Date;
-}
-
-// BrandVoice model
-export interface BrandVoice {
-  id: string;
-  userId: string;
-  tone: string;
-  formality: number;
-  keyPhrases: string[];
-  avoidPhrases: string[];
-  styleNotes: string | null;
-  signatureClosing: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// CreditUsage model
-export interface CreditUsage {
-  id: string;
-  userId: string;
-  creditsUsed: number;
-  action: string;
-  reviewId: string | null;
-  details: string | null;
-  createdAt: Date;
-}
-
-// SentimentUsage model
-export interface SentimentUsage {
-  id: string;
-  userId: string;
-  reviewId: string;
-  sentiment: Sentiment;
-  details: string | null;
-  createdAt: Date;
-}
-
-// Account model (for OAuth)
-export interface Account {
-  id: string;
-  userId: string;
-  type: string;
-  provider: string;
-  providerAccountId: string;
-  refresh_token: string | null;
-  access_token: string | null;
-  expires_at: number | null;
-  token_type: string | null;
-  scope: string | null;
-  id_token: string | null;
-  session_state: string | null;
-}
-
-// Session model
-export interface Session {
-  id: string;
-  sessionToken: string;
-  userId: string;
-  expires: Date;
-}
-
-// VerificationToken model
-export interface VerificationToken {
-  identifier: string;
-  token: string;
-  expires: Date;
-}
-
-// Type for review with response included
+/**
+ * Review with its response
+ */
 export interface ReviewWithResponse extends Review {
   response: ReviewResponse | null;
 }
 
-// Type for user with brand voice
-export interface UserWithBrandVoice extends User {
-  brandVoice: BrandVoice | null;
+/**
+ * Review with response and all versions
+ */
+export interface ReviewWithResponseAndVersions extends Review {
+  response: (ReviewResponse & {
+    versions: ResponseVersion[];
+  }) | null;
 }
+
+/**
+ * Review with user info (for admin views)
+ */
+export interface ReviewWithUser extends Review {
+  user: Pick<User, "id" | "email" | "name">;
+}
+
+/**
+ * Full review with all relations
+ */
+export interface ReviewFull extends Review {
+  user: Pick<User, "id" | "email" | "name">;
+  response: (ReviewResponse & {
+    versions: ResponseVersion[];
+  }) | null;
+}
+
+// ============================================
+// CREDIT/USAGE TYPES
+// ============================================
+
+/**
+ * Credit usage with review context
+ */
+export interface CreditUsageWithReview extends CreditUsage {
+  review: Pick<Review, "id" | "platform" | "reviewerName"> | null;
+}
+
+/**
+ * Sentiment usage with review context
+ */
+export interface SentimentUsageWithReview extends SentimentUsage {
+  review: Pick<Review, "id" | "platform" | "reviewerName"> | null;
+}
+
+// ============================================
+// ENUMS (matching Prisma)
+// ============================================
+
+/**
+ * Subscription tiers
+ */
+export const TierValues = {
+  FREE: "FREE",
+  STARTER: "STARTER",
+  GROWTH: "GROWTH",
+} as const;
+
+/**
+ * Supported platforms
+ */
+export const PlatformValues = {
+  GOOGLE: "google",
+  AMAZON: "amazon",
+  SHOPIFY: "shopify",
+  TRUSTPILOT: "trustpilot",
+  FACEBOOK: "facebook",
+  YELP: "yelp",
+  OTHER: "other",
+} as const;
+
+export type Platform = (typeof PlatformValues)[keyof typeof PlatformValues];
+
+/**
+ * Sentiment values
+ */
+export const SentimentValues = {
+  POSITIVE: "positive",
+  NEUTRAL: "neutral",
+  NEGATIVE: "negative",
+} as const;
+
+export type Sentiment = (typeof SentimentValues)[keyof typeof SentimentValues];
+
+/**
+ * Response tone values
+ */
+export const ToneValues = {
+  DEFAULT: "default",
+  PROFESSIONAL: "professional",
+  FRIENDLY: "friendly",
+  EMPATHETIC: "empathetic",
+  FORMAL: "formal",
+  CASUAL: "casual",
+} as const;
+
+export type Tone = (typeof ToneValues)[keyof typeof ToneValues];
+
+/**
+ * Credit action types
+ */
+export const CreditActionValues = {
+  GENERATE_RESPONSE: "GENERATE_RESPONSE",
+  REGENERATE: "REGENERATE",
+  REFUND: "REFUND",
+} as const;
+
+export type CreditAction = (typeof CreditActionValues)[keyof typeof CreditActionValues];
+
+// ============================================
+// UTILITY TYPES
+// ============================================
+
+/**
+ * Prisma select for user public fields
+ */
+export const userPublicSelect = {
+  id: true,
+  email: true,
+  name: true,
+  image: true,
+  tier: true,
+  credits: true,
+  creditsResetDate: true,
+  sentimentQuota: true,
+  sentimentUsed: true,
+  sentimentResetDate: true,
+  createdAt: true,
+} as const;
+
+/**
+ * Type for user public data (no password)
+ */
+export type UserPublic = Pick<
+  User,
+  | "id"
+  | "email"
+  | "name"
+  | "image"
+  | "tier"
+  | "credits"
+  | "creditsResetDate"
+  | "sentimentQuota"
+  | "sentimentUsed"
+  | "sentimentResetDate"
+  | "createdAt"
+>;
+
+/**
+ * Prisma select for review list view
+ */
+export const reviewListSelect = {
+  id: true,
+  platform: true,
+  reviewText: true,
+  rating: true,
+  reviewerName: true,
+  reviewDate: true,
+  detectedLanguage: true,
+  sentiment: true,
+  createdAt: true,
+  response: {
+    select: {
+      id: true,
+      responseText: true,
+      isEdited: true,
+      isPublished: true,
+      createdAt: true,
+    },
+  },
+} as const;

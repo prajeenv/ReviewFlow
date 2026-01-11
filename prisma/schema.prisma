@@ -1,6 +1,7 @@
-// This is a placeholder schema file.
-// The complete schema will be implemented in Prompt 2.
-// For now, we need this for Prisma to generate the client.
+// ===========================================
+// ReviewFlow Prisma Schema
+// Database: Supabase PostgreSQL
+// ===========================================
 
 generator client {
   provider = "prisma-client-js"
@@ -12,8 +13,234 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Placeholder model - will be replaced in Prompt 2
+// ============================================
+// AUTHENTICATION
+// ============================================
+
 model User {
-  id    String @id @default(cuid())
-  email String @unique
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  emailVerified       DateTime?
+  name                String?
+  image               String?
+  password            String?   // bcrypt hashed, null if OAuth only
+
+  // Subscription & Credits
+  tier                Tier      @default(FREE)
+  credits             Int       @default(15)
+  creditsResetDate    DateTime  @default(now())
+  sentimentQuota      Int       @default(35)
+  sentimentUsed       Int       @default(0)
+  sentimentResetDate  DateTime  @default(now())
+
+  // Timestamps
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  reviews             Review[]
+  brandVoice          BrandVoice?
+  creditUsage         CreditUsage[]
+  sentimentUsage      SentimentUsage[]
+  sessions            Session[]
+  accounts            Account[]
+
+  @@index([email])
+  @@index([tier])
+  @@map("users")
+}
+
+enum Tier {
+  FREE
+  STARTER
+  GROWTH
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String  // "oauth" | "email"
+  provider          String  // "google" | "credentials"
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// BRAND VOICE
+// ============================================
+
+model BrandVoice {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tone            String   @default("professional")  // "friendly" | "professional" | "casual" | "formal"
+  formality       Int      @default(3)               // 1-5 scale
+  keyPhrases      String[] @default([])
+  styleNotes      String?  @db.Text
+  sampleResponses String[] @default([])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@map("brand_voices")
+}
+
+// ============================================
+// REVIEWS & RESPONSES
+// ============================================
+
+model Review {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  platform        String                    // "google" | "amazon" | "shopify" | "trustpilot" | "other"
+  reviewText      String    @db.Text        // 1-2000 chars
+  rating          Int?                      // 1-5 stars, nullable
+  reviewerName    String?
+  reviewDate      DateTime?
+
+  detectedLanguage String   @default("English")
+  sentiment       String?                   // "positive" | "neutral" | "negative" | null
+
+  externalId      String?
+  externalUrl     String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  response        ReviewResponse?
+  creditUsage     CreditUsage[]
+  sentimentUsage  SentimentUsage[]
+
+  @@index([userId, createdAt])
+  @@index([platform])
+  @@index([sentiment])
+  @@map("reviews")
+}
+
+model ReviewResponse {
+  id              String   @id @default(cuid())
+  reviewId        String   @unique
+  review          Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  responseText    String   @db.Text        // Max 500 chars
+  isEdited        Boolean  @default(false)
+  editedAt        DateTime?
+
+  creditsUsed     Int      @default(1)
+  toneUsed        String   @default("default")
+  generationModel String   @default("claude-sonnet-4-20250514")
+
+  isPublished     Boolean  @default(false)
+  publishedAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  versions        ResponseVersion[]
+  creditUsage     CreditUsage[]
+
+  @@index([reviewId])
+  @@index([isPublished])
+  @@map("review_responses")
+}
+
+model ResponseVersion {
+  id                String   @id @default(cuid())
+  reviewResponseId  String
+  reviewResponse    ReviewResponse @relation(fields: [reviewResponseId], references: [id], onDelete: Cascade)
+
+  responseText      String   @db.Text
+  toneUsed          String
+  creditsUsed       Int      @default(1)
+
+  createdAt         DateTime @default(now())
+
+  @@index([reviewResponseId, createdAt])
+  @@map("response_versions")
+}
+
+// ============================================
+// AUDIT TRAILS
+// ============================================
+
+model CreditUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reviewId          String?
+  review            Review?          @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+
+  reviewResponseId  String?
+  reviewResponse    ReviewResponse?  @relation(fields: [reviewResponseId], references: [id], onDelete: SetNull)
+
+  creditsUsed Int      @default(1)          // Negative for refunds
+  action      String                        // "GENERATE_RESPONSE" | "REGENERATE" | "REFUND"
+
+  // Audit trail survives deletion (SET NULL relationships)
+  // Anonymized on GDPR deletion (PII redacted, structure preserved)
+  details     String?  @db.Text             // JSON: { reviewSnapshot, responseSnapshot, metadata, anonymized? }
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action])
+  @@map("credit_usage")
+}
+
+model SentimentUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reviewId  String?
+  review    Review?  @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+
+  sentiment String   // "positive" | "neutral" | "negative"
+
+  // Audit trail survives deletion, anonymized on GDPR deletion
+  details   String?  @db.Text  // JSON: { platform, rating, preview (100 chars), analyzedAt, anonymized? }
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([sentiment])
+  @@map("sentiment_usage")
 }
