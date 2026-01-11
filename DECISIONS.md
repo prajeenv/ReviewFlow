@@ -149,7 +149,25 @@ Full Prisma schema	Placeholder schema	Full schema is Prompt 2 scope	None - inten
 - Index optimization choices
 - Database pooling configuration
 
+1. Significant Technical Decisions
+Decision	Reason
+Prisma 5.22.0 (not 7.x)	Prisma 7 has breaking changes requiring config files for url; v5 is stable
+Direct database URL	Supabase pooler URL had "Tenant not found" errors; direct URL works reliably
+db push instead of migrate	Better for initial development; migrations should be used for production
+Atomic transactions for credits	Prevents race conditions when deducting credits; ensures data integrity
+Separate audit tables	GDPR compliance - audit trails survive data deletion
+Cascading deletes on User	When user is deleted, all related data is deleted (GDPR right to deletion)
+SetNull for audit references	Audit trails preserved when reviews/responses are deleted
+Re-export Prisma types	Single source of truth for database types
+2. Deviations from Phase 0 Specifications
+Spec Said	Implemented	Why	Risk
+Prisma 5.x	Prisma 5.22.0	Spec said 5.x, used latest stable 5.x	None
+migrate dev --name init	db push	Faster for initial setup; migrate for production	Low
+Supabase pooler URL format	Direct database URL	Pooler had authentication errors with project-ref username format	Low
+URL-encoded password in pooler	Direct URL with simple username	Pooler format postgres.projectref:pass didn't work	Low
+
 ---
+
 
 ## Prompt 3: Authentication
 

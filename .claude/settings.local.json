@@ -8,7 +8,10 @@
       "Bash(npm run dev:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Initial project setup \\(Prompt 1\\)\n\n- Initialize Next.js 14 with App Router and TypeScript\n- Install core dependencies \\(NextAuth, Prisma, Anthropic SDK, Resend\\)\n- Configure shadcn/ui with Radix UI primitives\n- Set up Tailwind CSS with ReviewFlow brand colors \\(indigo theme\\)\n- Create folder structure for app routes, components, lib, types\n- Add environment variables template \\(.env.example\\)\n- Configure TypeScript with strict mode\n- Add language detection utility \\(franc-min\\)\n- Add rate limiting packages \\(Upstash Redis\\)\n- Create placeholder pages for auth and dashboard\n- Set up ESLint configuration\n\nTech Stack:\n- Next.js 14.2.35 \\(App Router\\)\n- TypeScript 5.x \\(strict mode\\)\n- Tailwind CSS 3.4\n- shadcn/ui components\n- Prisma ORM\n- NextAuth.js v5 beta\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Initial project setup \\(Prompt 1\\)\n\n- Initialize Next.js 14 with App Router and TypeScript\n- Install core dependencies \\(NextAuth, Prisma, Anthropic SDK, Resend\\)\n- Configure shadcn/ui with Radix UI primitives\n- Set up Tailwind CSS with ReviewFlow brand colors \\(indigo theme\\)\n- Create folder structure for app routes, components, lib, types\n- Add environment variables template \\(.env.example\\)\n- Configure TypeScript with strict mode\n- Add language detection utility \\(franc-min\\)\n- Add rate limiting packages \\(Upstash Redis\\)\n- Create placeholder pages for auth and dashboard\n- Set up ESLint configuration\n\nTech Stack:\n- Next.js 14.2.35 \\(App Router\\)\n- TypeScript 5.x \\(strict mode\\)\n- Tailwind CSS 3.4\n- shadcn/ui components\n- Prisma ORM\n- NextAuth.js v5 beta\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ]
   }
 }
