@@ -117,18 +117,25 @@ Note: The Phase 0 specs are well-designed. Potential future deviations will be d
 - UI component library versions
 - Development tooling choices
 
-**Template for documenting:**
-```markdown
-### [Decision Name]
-- **Decision:** [What was decided]
-- **Why:** [Reasoning]
-- **Alternatives:** [What else was considered]
-- **Trade-offs:** [Pros and cons]
-- **Source:** [Spec reference or "Deviation"]
-- **Date:** [Date]
-- **Impact:** [How this affects project]
-- **Risk Level:** [Low ✅ | Medium ⚠️ | High 🚨]
-```
+1. Significant Technical Decisions
+Decision	Reason
+Next.js 14.2.35 (not 15)	Stable version; NextAuth v5 beta has better compatibility with 14.x
+Manual project setup	Existing docs folder required careful integration vs. create-next-app
+Tailwind 3.4 (not 4.x)	Better shadcn/ui compatibility; Tailwind v4 is still in beta
+ESLint 8.x	Next.js 14 uses ESLint 8; v9 has breaking changes
+React 18.x	Stable version; React 19 not needed for this project
+Geist font	Modern, professional font from Vercel; good for SaaS
+Sonner for toasts	Better DX than react-hot-toast; shadcn compatible
+Manual shadcn components	CLI can be unreliable; manual gives more control
+Custom badge variants	Added positive/neutral/negative for sentiment display
+Removed postinstall script	Prisma generate fails without full schema; will add back in Prompt 2
+2. Deviations from Phase 0 Specifications
+Spec Said	Implemented	Why	Risk
+next.config.ts	next.config.mjs	Next.js 14 doesn't support .ts config files	None
+npx shadcn-ui@latest add CLI	Manual component creation	CLI can be unreliable; manual approach is more predictable	Low
+postinstall: "prisma generate"	Removed	Prisma fails without full schema; will restore in Prompt 2	None
+Full Prisma schema	Placeholder schema	Full schema is Prompt 2 scope	None - intentional
+
 
 ---
 
