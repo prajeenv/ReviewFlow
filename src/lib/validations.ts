@@ -49,7 +49,7 @@ export const resetPasswordSchema = z.object({
 // Review schemas
 export const createReviewSchema = z.object({
   platform: z.enum(PLATFORMS, {
-    errorMap: () => ({ message: "Please select a valid platform" }),
+    message: "Please select a valid platform",
   }),
   reviewText: z
     .string()

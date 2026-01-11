@@ -33,7 +33,7 @@ export interface PaginationParams {
 }
 
 // Review API types
-export interface ReviewResponse {
+export interface ReviewApiResponse {
   id: string;
   platform: Platform;
   reviewText: string;
