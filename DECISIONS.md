@@ -188,6 +188,21 @@ These are NOT decisions (they're specified), but document here for reference:
 - Rate limit: 5 attempts/15 minutes (per spec)
 
 ---
+1. Significant Technical Decisions
+Decision	Reason
+NextAuth v5 (beta) over v4	Better App Router integration, improved TypeScript support, new auth() function for middleware
+JWT session strategy	Stateless authentication, 30-day sessions, reduced database load
+In-memory rate limiting fallback	Allows development without Upstash Redis while still providing rate limiting
+bcryptjs (pure JS)	Works in all environments including Edge, no native compilation
+Suspense boundaries	Required by Next.js 14 for pages using useSearchParams during static generation
+Split auth config	Moved config to src/lib/auth.ts for better organization and testability
+2. Deviations from Phase 0 Specifications
+Spec Said	Implemented	Why	Risk
+withAuth middleware	Custom middleware using auth()	NextAuth v5 deprecates withAuth	Low
+Upstash Redis required	In-memory fallback when Redis not configured	Better DX for local development	Low
+No password strength UI	Added visual indicator with checklist	Better UX	None
+Fewer auth pages	Added /forgot-password, /reset-password, /verify-email, /error	Complete auth flow	None
+
 
 ## Prompt 4: Dashboard & UI
 

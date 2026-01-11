@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, CheckCircle, XCircle, Mail } from "lucide-react";
@@ -23,9 +23,12 @@ function VerifyEmailContent() {
   const [email, setEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
+  const hasVerified = useRef(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || hasVerified.current) return;
+
+    hasVerified.current = true;
 
     const verifyEmail = async () => {
       try {

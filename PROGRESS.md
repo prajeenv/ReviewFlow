@@ -272,6 +272,44 @@ Latest Commit: ea0483c - feat: Implement database schema with Prisma (Prompt 2)
 - [ ] Test all authentication flows
 
 ---
+3. What to Test Before Considering Complete
+Signup Flow: Create account at /auth/signup, verify password strength indicator works
+Email Verification: Check Resend logs for verification email (requires RESEND_API_KEY)
+Login: Try logging in at /auth/signin with unverified email (should fail), then verified (should work)
+Google OAuth: If configured, test "Continue with Google" button
+Password Reset: Test forgot password flow at /auth/forgot-password
+Protected Routes: Access /dashboard while logged out (should redirect to signin)
+Build: Run npm run build - should complete without errors
+4. Before Moving to Prompt 4
+Required Environment Variables:
+
+
+# Already set from Prompt 2
+DATABASE_URL="postgresql://..."
+NEXTAUTH_SECRET="<generate with: openssl rand -base64 32>"
+
+# Required for email verification
+RESEND_API_KEY="re_..."
+
+# Optional - for Google OAuth
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
+
+# Optional - for production rate limiting
+UPSTASH_REDIS_REST_URL="..."
+UPSTASH_REDIS_REST_TOKEN="..."
+5. What Was Completed
+Category	Items
+Auth Configuration	NextAuth v5 setup with Prisma adapter, JWT sessions, Google + Credentials providers
+API Routes	6 auth endpoints (signup, verify-email, resend-verification, password-reset/request, password-reset/confirm, [...nextauth])
+Auth Pages	6 pages (signin, signup, verify-email, forgot-password, reset-password, error)
+Components	LoginForm, SignupForm with password strength indicator, SessionProvider
+Utilities	Email service (Resend), Rate limiting (Upstash/in-memory), Token management
+Middleware	Protected routes for /dashboard, /reviews, /settings, /api/*
+Security	Headers (X-Frame-Options, HSTS, etc.), bcrypt (12 rounds), rate limiting
+Repository: https://github.com/prajeenv/ReviewFlow
+
+Commit: 4c90aa9 - feat: Implement complete authentication system (Prompt 3
 
 ### ⏳ Prompt 4: Dashboard & Core UI
 
