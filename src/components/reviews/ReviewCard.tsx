@@ -54,7 +54,7 @@ export interface ReviewCardData {
 
 interface ReviewCardProps {
   review: ReviewCardData;
-  onDelete?: (id: string) => void;
+  onDelete?: (_id: string) => void;
 }
 
 function getSentimentColor(sentiment: string | null) {

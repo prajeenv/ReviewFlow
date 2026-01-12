@@ -57,7 +57,11 @@ export const createReviewSchema = z.object({
     .max(VALIDATION_LIMITS.REVIEW_TEXT_MAX, `Review text must be under ${VALIDATION_LIMITS.REVIEW_TEXT_MAX} characters`),
   rating: z.number().min(1).max(5).optional().nullable(),
   reviewerName: z.string().max(100).optional().nullable(),
-  reviewDate: z.string().datetime().optional().nullable(),
+  // Accept both date (YYYY-MM-DD) and datetime formats
+  reviewDate: z.string().refine(
+    (val) => !val || /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/.test(val),
+    { message: "Invalid date format" }
+  ).optional().nullable(),
   detectedLanguage: z.string().optional(),
 });
 
@@ -70,7 +74,11 @@ export const updateReviewSchema = z.object({
     .optional(),
   rating: z.number().min(1).max(5).optional().nullable(),
   reviewerName: z.string().max(100).optional().nullable(),
-  reviewDate: z.string().datetime().optional().nullable(),
+  // Accept both date (YYYY-MM-DD) and datetime formats
+  reviewDate: z.string().refine(
+    (val) => !val || /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/.test(val),
+    { message: "Invalid date format" }
+  ).optional().nullable(),
   detectedLanguage: z.string().optional(),
 });
 

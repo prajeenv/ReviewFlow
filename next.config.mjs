@@ -3,6 +3,9 @@ const nextConfig = {
   // Enable React strict mode for better development experience
   reactStrictMode: true,
 
+  // Transpile geist font package
+  transpilePackages: ["geist"],
+
   // Optimize images
   images: {
     remotePatterns: [
