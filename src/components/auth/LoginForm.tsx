@@ -17,6 +17,21 @@ interface LoginFormProps {
   callbackUrl?: string;
 }
 
+// Map NextAuth error codes to user-friendly messages
+const errorMessages: Record<string, string> = {
+  Configuration: "Invalid email or password.",
+  CredentialsSignin: "Invalid email or password.",
+  OAuthSignin: "Error starting the sign-in process.",
+  OAuthCallback: "Error during the sign-in callback.",
+  OAuthCreateAccount: "Could not create an account.",
+  EmailCreateAccount: "Could not create an email account.",
+  Callback: "Error during the sign-in process.",
+  OAuthAccountNotLinked: "This email is already associated with another account.",
+  EmailSignin: "Error sending the verification email.",
+  SessionRequired: "Please sign in to access this page.",
+  Default: "An unexpected error occurred. Please try again.",
+};
+
 export function LoginForm({ callbackUrl = "/dashboard" }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -44,14 +59,16 @@ export function LoginForm({ callbackUrl = "/dashboard" }: LoginFormProps) {
       });
 
       if (result?.error) {
-        setError(result.error);
+        // Map the error code to a user-friendly message
+        const friendlyError = errorMessages[result.error] || errorMessages.Default;
+        setError(friendlyError);
         return;
       }
 
       router.push(callbackUrl);
       router.refresh();
     } catch {
-      setError("An unexpected error occurred. Please try again.");
+      setError(errorMessages.Default);
     } finally {
       setIsLoading(false);
     }
