@@ -1,58 +1,274 @@
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
 
-/**
- * Dashboard page - placeholder for Prompt 4
- */
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { toast } from "sonner";
+import {
+  CreditCard,
+  MessageSquare,
+  BarChart3,
+  TrendingUp,
+  Brain,
+  Plus,
+  Star,
+  Clock,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatsCard, QuotaCard, EmptyReviews } from "@/components/dashboard";
+
+interface DashboardStats {
+  credits: {
+    remaining: number;
+    total: number;
+    used: number;
+    resetDate: string;
+  };
+  sentiment: {
+    remaining: number;
+    total: number;
+    used: number;
+    resetDate: string;
+  };
+  tier: string;
+  stats: {
+    totalReviews: number;
+    totalResponses: number;
+    avgEditRate: number;
+  };
+  recentReviews: Array<{
+    id: string;
+    platform: string;
+    reviewText: string;
+    rating: number | null;
+    sentiment: string | null;
+    createdAt: string;
+    hasResponse: boolean;
+  }>;
+}
+
+function getSentimentColor(sentiment: string | null) {
+  switch (sentiment) {
+    case "positive":
+      return "bg-green-100 text-green-800";
+    case "negative":
+      return "bg-red-100 text-red-800";
+    case "neutral":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-600";
+  }
+}
+
+function formatTimeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+}
+
 export default function DashboardPage() {
+  const { data: session } = useSession();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch("/api/dashboard/stats");
+        const data = await response.json();
+
+        if (data.success) {
+          setStats(data.data);
+        } else {
+          setError(data.error?.message || "Failed to load dashboard data");
+          toast.error("Failed to load dashboard data");
+        }
+      } catch {
+        setError("Unable to connect to server");
+        toast.error("Unable to connect to server");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchStats();
+  }, []);
+
+  const userName = session?.user?.name?.split(" ")[0] || "there";
+
   return (
     <div className="space-y-8">
+      {/* Welcome header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Welcome back, {userName}!
+          </h1>
+          <p className="text-muted-foreground">
+            Here&apos;s an overview of your review management activity.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/dashboard/reviews/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Review
+          </Link>
+        </Button>
+      </div>
+
+      {/* Quota cards */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <QuotaCard
+          title="Response Credits"
+          used={stats?.credits.used ?? 0}
+          total={stats?.credits.total ?? 0}
+          resetDate={stats?.credits.resetDate}
+          icon={CreditCard}
+          isLoading={isLoading}
+        />
+        <QuotaCard
+          title="Sentiment Analysis"
+          used={stats?.sentiment.used ?? 0}
+          total={stats?.sentiment.total ?? 0}
+          resetDate={stats?.sentiment.resetDate}
+          icon={Brain}
+          isLoading={isLoading}
+        />
+      </div>
+
+      {/* Stats cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatsCard
+          title="Total Reviews"
+          value={stats?.stats.totalReviews ?? 0}
+          description="All time"
+          icon={MessageSquare}
+          isLoading={isLoading}
+        />
+        <StatsCard
+          title="AI Responses"
+          value={stats?.stats.totalResponses ?? 0}
+          description="Generated responses"
+          icon={BarChart3}
+          isLoading={isLoading}
+        />
+        <StatsCard
+          title="Edit Rate"
+          value={`${stats?.stats.avgEditRate ?? 0}%`}
+          description="Responses edited before use"
+          icon={TrendingUp}
+          isLoading={isLoading}
+        />
+      </div>
+
+      {/* Recent reviews section */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to ReviewFlow. This dashboard will be implemented in Prompt 4.
-        </p>
-      </div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Recent Reviews</h2>
+          {(stats?.stats.totalReviews ?? 0) > 0 && (
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/reviews">View all</Link>
+            </Button>
+          )}
+        </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Reviews</CardTitle>
-            <CardDescription>Manage your customer reviews</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">0</p>
-            <p className="text-sm text-muted-foreground">Total reviews</p>
-          </CardContent>
-        </Card>
+        {isLoading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : error ? (
+          <Card className="border-destructive/50">
+            <CardContent className="p-6 text-center">
+              <p className="text-sm text-muted-foreground">{error}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        ) : stats?.recentReviews && stats.recentReviews.length > 0 ? (
+          <div className="space-y-4">
+            {stats.recentReviews.map((review) => (
+              <Link key={review.id} href={`/dashboard/reviews/${review.id}`}>
+                <Card className="transition-shadow hover:shadow-md cursor-pointer">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-4">
+                      {/* Platform icon / rating */}
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                        {review.rating ? (
+                          <div className="flex items-center">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="ml-0.5 text-xs font-medium">
+                              {review.rating}
+                            </span>
+                          </div>
+                        ) : (
+                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Credits</CardTitle>
-            <CardDescription>Available response credits</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">5.0</p>
-            <p className="text-sm text-muted-foreground">Credits remaining</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Responses</CardTitle>
-            <CardDescription>AI-generated responses</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">0</p>
-            <p className="text-sm text-muted-foreground">Responses created</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="text-center">
-        <Link href="/" className="text-brand-500 hover:underline">
-          Return to home
-        </Link>
+                      {/* Review content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="text-xs">
+                            {review.platform}
+                          </Badge>
+                          {review.sentiment && (
+                            <Badge
+                              className={`text-xs ${getSentimentColor(review.sentiment)}`}
+                              variant="secondary"
+                            >
+                              {review.sentiment}
+                            </Badge>
+                          )}
+                          {review.hasResponse && (
+                            <Badge variant="secondary" className="text-xs">
+                              Responded
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm line-clamp-2">{review.reviewText}</p>
+                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {formatTimeAgo(review.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <EmptyReviews />
+        )}
       </div>
     </div>
   );

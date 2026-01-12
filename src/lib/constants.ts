@@ -31,7 +31,7 @@ export type ResponseTone = (typeof RESPONSE_TONES)[number];
 export const SUBSCRIPTION_TIERS = ["FREE", "STARTER", "GROWTH"] as const;
 export type SubscriptionTier = (typeof SUBSCRIPTION_TIERS)[number];
 
-// Tier limits
+// Tier limits (from CORE_SPECS.md)
 export const TIER_LIMITS: Record<
   SubscriptionTier,
   {
@@ -42,14 +42,14 @@ export const TIER_LIMITS: Record<
   }
 > = {
   FREE: {
-    credits: 5,
-    sentimentQuota: 10,
+    credits: 15,
+    sentimentQuota: 35,
     price: 0,
     name: "Free",
   },
   STARTER: {
-    credits: 50,
-    sentimentQuota: 100,
+    credits: 60,
+    sentimentQuota: 150,
     price: 29,
     name: "Starter",
   },
