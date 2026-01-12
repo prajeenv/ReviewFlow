@@ -1,8 +1,8 @@
 # ReviewFlow Project Summary
 
-**Last Updated:** January 2026
+**Last Updated:** January 12, 2026
 **Repository:** https://github.com/prajeenv/ReviewFlow
-**Current Status:** Prompt 3 Complete (Authentication System)
+**Current Status:** Prompt 3 Complete + Google OAuth Fix (Ready for Prompt 4)
 
 ---
 
@@ -165,6 +165,8 @@ DEEPSEEK_API_KEY="sk-..."
 | Tailwind `darkMode: ["class"]` type error | Changed to `darkMode: "class"` |
 | `useSearchParams` prerender error | Wrapped pages in Suspense boundaries |
 | Type conflict `ReviewResponse` | Renamed API type to `ReviewApiResponse` |
+| Google OAuth "email already linked" error | Added `allowDangerousEmailAccountLinking: true` + custom signIn callback |
+| OAuth account linking for existing users | Custom signIn callback auto-links Google accounts to existing users |
 
 ---
 
@@ -232,18 +234,42 @@ npx tsx scripts/test-db.ts
 
 ## Latest Commit
 
-**Commit:** `4c90aa9`
-**Message:** feat: Implement complete authentication system (Prompt 3)
+**Commit:** `b34ebf5`
+**Message:** fix: Enable Google OAuth account linking for existing users
 **Branch:** main
+
+---
+
+## Authentication Features (Complete)
+
+### Email/Password Authentication
+- Signup with email verification (Resend)
+- Login with credentials
+- Password reset flow
+- Rate limiting on auth endpoints
+
+### Google OAuth
+- Sign in with Google
+- **Account linking**: Users who signed up with email/password can also sign in with Google (same email)
+- Profile picture and name sync from Google
+- Email auto-verified for OAuth users
+
+### Session Management
+- JWT-based sessions (30 days)
+- Protected routes via middleware
+- Logout functionality
 
 ---
 
 ## Notes for Next Session
 
 1. **Prompt 4** is next: Dashboard Layout & Navigation
-2. All environment variables from Prompts 1-3 should be configured
+2. All environment variables are configured in `.env.local`
 3. Build passes successfully (`npm run build`)
-4. Authentication is fully functional but requires:
-   - `RESEND_API_KEY` for email verification
-   - `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` for OAuth (optional)
+4. **Authentication is fully tested and working:**
+   - Email/password signup and login ✅
+   - Email verification ✅
+   - Google OAuth ✅
+   - Account linking (email + Google same user) ✅
 5. Reference `docs/phase-0/IMPLEMENTATION_GUIDE.md` for UI/UX requirements
+6. Current user in database: `prajeen.builder@gmail.com` (has both credentials and Google linked)
