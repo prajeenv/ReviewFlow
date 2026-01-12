@@ -2,7 +2,7 @@
 
 **Last Updated:** January 12, 2026
 **Repository:** https://github.com/prajeenv/ReviewFlow
-**Current Status:** Prompt 3 Complete + Google OAuth Fix (Ready for Prompt 4)
+**Current Status:** Prompt 4 Complete (Dashboard Layout & Navigation) - Ready for Prompt 5
 
 ---
 
@@ -39,13 +39,24 @@ Reviews added → AI generates response in same language → User edits (optiona
 ### Prompt 3: Authentication System ✅
 - NextAuth.js v5 (beta) with JWT sessions (30 days)
 - Email/password authentication with bcrypt (12 rounds)
-- Google OAuth provider
+- Google OAuth provider with account linking
 - Email verification flow with Resend
 - Password reset flow
 - Rate limiting (Upstash Redis with in-memory fallback)
 - Protected routes middleware
 - Security headers
 - Documented in `docs/phase-0/PROMPT_3_OUTCOME.md`
+
+### Prompt 4: Dashboard Layout & Navigation ✅
+- Responsive sidebar navigation (Dashboard, Reviews, Settings)
+- Dashboard header with user menu dropdown and credit balance badge
+- StatsCard and QuotaCard components for metrics display
+- EmptyState component for no-data scenarios
+- LoadingSpinner and ErrorBoundary shared components
+- Dashboard page with real user data, stats, and recent reviews
+- `/api/dashboard/stats` endpoint for dashboard data
+- Mobile-responsive design with hamburger menu (Sheet component)
+- Toast notifications via Sonner
 
 ---
 
@@ -82,11 +93,25 @@ reviewflow/
 │   ├── app/
 │   │   ├── (auth)/         # Auth pages (signin, signup, verify-email, etc.)
 │   │   ├── (dashboard)/    # Protected dashboard pages
-│   │   └── api/            # API routes
-│   │       └── auth/       # Auth endpoints
+│   │   │   ├── layout.tsx  # Dashboard layout with sidebar & header
+│   │   │   └── dashboard/page.tsx  # Main dashboard page
+│   │   └── api/
+│   │       ├── auth/       # Auth endpoints
+│   │       └── dashboard/  # Dashboard API
+│   │           └── stats/route.ts  # Dashboard stats endpoint
 │   ├── components/
-│   │   ├── ui/             # shadcn/ui components
+│   │   ├── ui/             # shadcn/ui components (18 components)
 │   │   ├── auth/           # LoginForm, SignupForm
+│   │   ├── dashboard/      # Dashboard components (Prompt 4)
+│   │   │   ├── Sidebar.tsx
+│   │   │   ├── DashboardHeader.tsx
+│   │   │   ├── StatsCard.tsx (+ QuotaCard)
+│   │   │   ├── EmptyState.tsx (+ EmptyReviews)
+│   │   │   └── index.ts
+│   │   ├── shared/         # Shared components (Prompt 4)
+│   │   │   ├── LoadingSpinner.tsx (+ LoadingPage)
+│   │   │   ├── ErrorBoundary.tsx (+ ErrorMessage)
+│   │   │   └── index.ts
 │   │   └── providers/      # SessionProvider
 │   ├── lib/
 │   │   ├── auth.ts         # NextAuth configuration
@@ -96,7 +121,7 @@ reviewflow/
 │   │   ├── rate-limit.ts   # Rate limiting
 │   │   ├── tokens.ts       # Token generation/validation
 │   │   ├── validations.ts  # Zod schemas
-│   │   └── constants.ts    # App constants
+│   │   └── constants.ts    # App constants (tier limits, etc.)
 │   ├── types/
 │   │   ├── api.ts          # API types
 │   │   ├── database.ts     # Prisma type re-exports
@@ -167,6 +192,8 @@ DEEPSEEK_API_KEY="sk-..."
 | Type conflict `ReviewResponse` | Renamed API type to `ReviewApiResponse` |
 | Google OAuth "email already linked" error | Added `allowDangerousEmailAccountLinking: true` + custom signIn callback |
 | OAuth account linking for existing users | Custom signIn callback auto-links Google accounts to existing users |
+| Dashboard layout auth state | Changed from server component to client component with `useSession` |
+| Tier limits mismatch | Updated constants to match CORE_SPECS.md (FREE: 15 credits, 35 sentiment) |
 
 ---
 
@@ -196,19 +223,29 @@ DEEPSEEK_API_KEY="sk-..."
 - `GET /api/auth/password-reset/confirm` - Validate token
 - `GET/POST /api/auth/[...nextauth]` - NextAuth handlers
 
+### Dashboard (Prompt 4)
+- `GET /api/dashboard/stats` - Get user stats, credits, sentiment quota, recent reviews
+
 ---
 
-## Remaining Prompts (4-10)
+## UI Components (shadcn/ui)
+
+**Installed components:**
+- button, input, label, card, textarea, badge, select, dialog
+- avatar, separator, dropdown-menu, sheet, skeleton, tooltip, scroll-area
+
+---
+
+## Remaining Prompts (5-10)
 
 | Prompt | Description |
 |--------|-------------|
-| **4** | Dashboard Layout & Navigation |
-| **5** | Review Management (CRUD) |
-| **6** | AI Response Generation (Claude) |
-| **7** | Brand Voice Configuration |
-| **8** | Sentiment Analysis (DeepSeek) |
-| **9** | Credit System & Usage Tracking |
-| **10** | Settings & User Profile |
+| **5** | Review Management (CRUD) - Add/edit/delete reviews, list with filters |
+| **6** | AI Response Generation (Claude) - Generate responses with brand voice |
+| **7** | Brand Voice Configuration - Settings for tone, formality, key phrases |
+| **8** | Sentiment Analysis (DeepSeek) - Analyze review sentiment |
+| **9** | Credit System & Usage Tracking - Credit deduction, usage history |
+| **10** | Settings & User Profile - Account settings, profile management |
 
 ---
 
@@ -234,8 +271,8 @@ npx tsx scripts/test-db.ts
 
 ## Latest Commit
 
-**Commit:** `b34ebf5`
-**Message:** fix: Enable Google OAuth account linking for existing users
+**Commit:** `dcb4d79`
+**Message:** feat: Implement dashboard layout and navigation (Prompt 4)
 **Branch:** main
 
 ---
@@ -261,15 +298,42 @@ npx tsx scripts/test-db.ts
 
 ---
 
+## Dashboard Features (Prompt 4 Complete)
+
+### Layout
+- **Sidebar**: Fixed left sidebar (desktop), Sheet drawer (mobile)
+- **Header**: Sticky header with credit badge and user dropdown
+- **Navigation**: Dashboard, Reviews, Settings links
+
+### Dashboard Page
+- Welcome message with user's name
+- Credit balance card (remaining/total, reset date)
+- Sentiment quota card (remaining/total, reset date)
+- Quick stats: Total reviews, AI responses, edit rate
+- Recent reviews list (last 5) with sentiment badges
+- Empty state for new users with "Add Review" CTA
+
+### Components Created
+- `Sidebar.tsx` - Navigation sidebar
+- `DashboardHeader.tsx` - Header with user menu
+- `StatsCard.tsx` - Metric display card
+- `QuotaCard.tsx` - Quota display with progress bar
+- `EmptyState.tsx` - Empty state display
+- `LoadingSpinner.tsx` - Loading indicators
+- `ErrorBoundary.tsx` - Error handling wrapper
+
+---
+
 ## Notes for Next Session
 
-1. **Prompt 4** is next: Dashboard Layout & Navigation
+1. **Prompt 5** is next: Review Management (CRUD)
 2. All environment variables are configured in `.env.local`
 3. Build passes successfully (`npm run build`)
-4. **Authentication is fully tested and working:**
-   - Email/password signup and login ✅
-   - Email verification ✅
-   - Google OAuth ✅
-   - Account linking (email + Google same user) ✅
-5. Reference `docs/phase-0/IMPLEMENTATION_GUIDE.md` for UI/UX requirements
-6. Current user in database: `prajeen.builder@gmail.com` (has both credentials and Google linked)
+4. **Authentication is fully tested and working**
+5. **Dashboard layout is complete and responsive**
+6. Reference `docs/phase-0/IMPLEMENTATION_GUIDE.md` for Review Addition Flow
+7. Review pages needed:
+   - `/dashboard/reviews` - List all reviews
+   - `/dashboard/reviews/new` - Add new review
+   - `/dashboard/reviews/[id]` - View/edit single review
+8. Current user in database: `prajeen.builder@gmail.com` (has both credentials and Google linked)
