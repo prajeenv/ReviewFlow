@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,10 +34,20 @@ const errorMessages: Record<string, string> = {
 
 export function LoginForm({ callbackUrl = "/dashboard" }: LoginFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Check for OAuth errors in URL parameters
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    if (authError) {
+      const friendlyError = errorMessages[authError] || errorMessages.Default;
+      setError(friendlyError);
+    }
+  }, [searchParams]);
 
   const {
     register,
@@ -79,8 +89,12 @@ export function LoginForm({ callbackUrl = "/dashboard" }: LoginFormProps) {
     setError(null);
 
     try {
-      await signIn("google", { callbackUrl });
-    } catch {
+      await signIn("google", {
+        callbackUrl,
+      });
+      // Note: signIn with redirect: true (default) will redirect and never return here
+    } catch (error) {
+      console.error("Google sign-in error:", error);
       setError("Failed to sign in with Google. Please try again.");
       setIsGoogleLoading(false);
     }

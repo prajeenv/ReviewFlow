@@ -63,6 +63,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           scope: "openid email profile",
@@ -75,40 +76,96 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
 
   callbacks: {
-    async signIn({ user, account }) {
-      // OAuth users have pre-verified email
+    async signIn({ user, account, profile }) {
+      console.log("SignIn callback triggered:", {
+        provider: account?.provider,
+        email: user.email,
+        userId: user.id,
+      });
+
+      // Handle Google OAuth sign-in
       if (account?.provider === "google" && user.email) {
-        try {
-          await prisma.user.update({
-            where: { email: user.email },
-            data: { emailVerified: new Date() },
-          });
-        } catch {
-          // User might not exist yet, that's OK - adapter will create them
+        // Check if user already exists with this email
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          include: { accounts: true },
+        });
+
+        if (existingUser) {
+          // Check if Google account is already linked
+          const googleAccountLinked = existingUser.accounts.some(
+            (acc) => acc.provider === "google"
+          );
+
+          if (!googleAccountLinked) {
+            // Link the Google account to the existing user
+            await prisma.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                refresh_token: account.refresh_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+              },
+            });
+            console.log("Linked Google account to existing user:", user.email);
+          }
+
+          // Update emailVerified if not already verified
+          if (!existingUser.emailVerified) {
+            await prisma.user.update({
+              where: { email: user.email },
+              data: { emailVerified: new Date() },
+            });
+          }
+
+          // Update user info from Google profile if available
+          if (profile) {
+            await prisma.user.update({
+              where: { email: user.email },
+              data: {
+                name: existingUser.name || profile.name,
+                image: existingUser.image || (profile as { picture?: string }).picture,
+              },
+            });
+          }
         }
       }
       return true;
     },
 
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, account }) {
+      // Initial sign in - user object is available
       if (user) {
         token.id = user.id;
         token.tier = (user as { tier?: string }).tier || "FREE";
       }
 
-      // Handle session updates (e.g., tier upgrade)
-      if (trigger === "update" && session) {
-        if (session.tier) token.tier = session.tier;
-        if (session.name) token.name = session.name;
+      // For OAuth, fetch the latest user data from database
+      if (account?.provider === "google" && token.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email },
+          select: { id: true, tier: true },
+        });
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.tier = dbUser.tier || "FREE";
+        }
       }
 
       return token;
     },
 
     async session({ session, token }) {
+      // Transfer token data to session
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.tier = token.tier as string;
+        session.user.tier = (token.tier as string) || "FREE";
       }
       return session;
     },
