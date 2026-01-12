@@ -2,7 +2,7 @@
 
 **Last Updated:** January 12, 2026
 **Repository:** https://github.com/prajeenv/ReviewFlow
-**Current Status:** Prompt 4 Complete (Dashboard Layout & Navigation) - Ready for Prompt 5
+**Current Status:** Prompt 5 Complete (Review Management CRUD) - Ready for Prompt 6
 
 ---
 
@@ -58,6 +58,15 @@ Reviews added → AI generates response in same language → User edits (optiona
 - Mobile-responsive design with hamburger menu (Sheet component)
 - Toast notifications via Sonner
 
+### Prompt 5: Review Management CRUD ✅
+- Complete Review API with CRUD operations
+- Language detection using `franc-min` library (40+ languages)
+- Sentiment analysis using DeepSeek API with fallback
+- Review listing with pagination and filters
+- Add/Edit/Delete review functionality
+- Review detail page with response display
+- RTL language support (Arabic, Hebrew, Persian, Urdu)
+
 ---
 
 ## Tech Stack
@@ -72,6 +81,8 @@ Reviews added → AI generates response in same language → User edits (optiona
 | UI | shadcn/ui + Radix UI | - |
 | Styling | Tailwind CSS | 3.4 |
 | AI | Anthropic Claude SDK | 0.71.2 |
+| Sentiment | DeepSeek API | - |
+| Language Detection | franc-min | 6.2.0 |
 | Email | Resend | 6.7.0 |
 | Validation | Zod | 4.3.5 |
 | Rate Limiting | Upstash Ratelimit | 2.0.7 |
@@ -94,24 +105,30 @@ reviewflow/
 │   │   ├── (auth)/         # Auth pages (signin, signup, verify-email, etc.)
 │   │   ├── (dashboard)/    # Protected dashboard pages
 │   │   │   ├── layout.tsx  # Dashboard layout with sidebar & header
-│   │   │   └── dashboard/page.tsx  # Main dashboard page
+│   │   │   └── dashboard/
+│   │   │       ├── page.tsx        # Main dashboard page
+│   │   │       └── reviews/        # Review management pages (Prompt 5)
+│   │   │           ├── page.tsx    # Reviews list with filters
+│   │   │           ├── new/page.tsx        # Add new review
+│   │   │           └── [id]/
+│   │   │               ├── page.tsx        # Review detail
+│   │   │               └── edit/page.tsx   # Edit review
 │   │   └── api/
 │   │       ├── auth/       # Auth endpoints
-│   │       └── dashboard/  # Dashboard API
-│   │           └── stats/route.ts  # Dashboard stats endpoint
+│   │       ├── dashboard/  # Dashboard API
+│   │       └── reviews/    # Review CRUD API (Prompt 5)
+│   │           ├── route.ts        # POST (create), GET (list)
+│   │           └── [id]/route.ts   # GET, PUT, DELETE
 │   ├── components/
 │   │   ├── ui/             # shadcn/ui components (18 components)
 │   │   ├── auth/           # LoginForm, SignupForm
 │   │   ├── dashboard/      # Dashboard components (Prompt 4)
-│   │   │   ├── Sidebar.tsx
-│   │   │   ├── DashboardHeader.tsx
-│   │   │   ├── StatsCard.tsx (+ QuotaCard)
-│   │   │   ├── EmptyState.tsx (+ EmptyReviews)
+│   │   ├── reviews/        # Review components (Prompt 5)
+│   │   │   ├── ReviewForm.tsx      # Add/edit review form
+│   │   │   ├── ReviewCard.tsx      # Review card display
+│   │   │   ├── ReviewList.tsx      # Paginated list with filters
 │   │   │   └── index.ts
-│   │   ├── shared/         # Shared components (Prompt 4)
-│   │   │   ├── LoadingSpinner.tsx (+ LoadingPage)
-│   │   │   ├── ErrorBoundary.tsx (+ ErrorMessage)
-│   │   │   └── index.ts
+│   │   ├── shared/         # Shared components
 │   │   └── providers/      # SessionProvider
 │   ├── lib/
 │   │   ├── auth.ts         # NextAuth configuration
@@ -121,7 +138,10 @@ reviewflow/
 │   │   ├── rate-limit.ts   # Rate limiting
 │   │   ├── tokens.ts       # Token generation/validation
 │   │   ├── validations.ts  # Zod schemas
-│   │   └── constants.ts    # App constants (tier limits, etc.)
+│   │   ├── constants.ts    # App constants (tier limits, languages, etc.)
+│   │   ├── language-detection.ts   # Language detection (franc-min)
+│   │   └── ai/
+│   │       └── deepseek.ts # Sentiment analysis service
 │   ├── types/
 │   │   ├── api.ts          # API types
 │   │   ├── database.ts     # Prisma type re-exports
@@ -171,9 +191,9 @@ EMAIL_FROM="noreply@yourdomain.com"
 UPSTASH_REDIS_REST_URL="..."
 UPSTASH_REDIS_REST_TOKEN="..."
 
-# AI Services (for later prompts)
-ANTHROPIC_API_KEY="sk-ant-..."
-DEEPSEEK_API_KEY="sk-..."
+# AI Services
+ANTHROPIC_API_KEY="sk-ant-..."      # For response generation (Prompt 6)
+DEEPSEEK_API_KEY="sk-..."           # For sentiment analysis (optional - has fallback)
 ```
 
 ---
@@ -186,6 +206,7 @@ DEEPSEEK_API_KEY="sk-..."
 | Supabase pooler URL "Tenant not found" | Used direct database URL instead |
 | Password special characters | URL-encoded in connection string |
 | Zod v4 enum syntax | Changed `errorMap` to `message` |
+| Zod v4 `.errors` → `.issues` | Updated error handling in API routes |
 | `@typescript-eslint/no-unused-vars` not found | Removed from ESLint, using standard `no-unused-vars` |
 | Tailwind `darkMode: ["class"]` type error | Changed to `darkMode: "class"` |
 | `useSearchParams` prerender error | Wrapped pages in Suspense boundaries |
@@ -195,6 +216,7 @@ DEEPSEEK_API_KEY="sk-..."
 | Dashboard layout auth state | Changed from server component to client component with `useSession` |
 | Tier limits mismatch | Updated constants to match CORE_SPECS.md (FREE: 15 credits, 35 sentiment) |
 | Middleware Edge runtime | Changed from `auth()` to `getToken()` for Edge runtime compatibility |
+| DeepSeek API unavailable | Added fallback keyword-based sentiment analysis |
 
 ---
 
@@ -227,6 +249,13 @@ DEEPSEEK_API_KEY="sk-..."
 ### Dashboard (Prompt 4)
 - `GET /api/dashboard/stats` - Get user stats, credits, sentiment quota, recent reviews
 
+### Reviews (Prompt 5)
+- `POST /api/reviews` - Create review (with language detection & sentiment analysis)
+- `GET /api/reviews` - List reviews (paginated, filterable by platform/sentiment)
+- `GET /api/reviews/[id]` - Get single review with response and versions
+- `PUT /api/reviews/[id]` - Update review (re-detects language if text changed)
+- `DELETE /api/reviews/[id]` - Delete review (cascades to response/versions)
+
 ---
 
 ## UI Components (shadcn/ui)
@@ -237,14 +266,13 @@ DEEPSEEK_API_KEY="sk-..."
 
 ---
 
-## Remaining Prompts (5-10)
+## Remaining Prompts (6-10)
 
 | Prompt | Description |
 |--------|-------------|
-| **5** | Review Management (CRUD) - Add/edit/delete reviews, list with filters |
 | **6** | AI Response Generation (Claude) - Generate responses with brand voice |
 | **7** | Brand Voice Configuration - Settings for tone, formality, key phrases |
-| **8** | Sentiment Analysis (DeepSeek) - Analyze review sentiment |
+| **8** | Response Editing & Publishing - Edit responses, mark as published |
 | **9** | Credit System & Usage Tracking - Credit deduction, usage history |
 | **10** | Settings & User Profile - Account settings, profile management |
 
@@ -254,7 +282,7 @@ DEEPSEEK_API_KEY="sk-..."
 
 ```bash
 # Development
-npm run dev           # Start dev server
+npm run dev           # Start dev server (http://localhost:3000)
 
 # Build
 npm run build         # Production build
@@ -272,69 +300,57 @@ npx tsx scripts/test-db.ts
 
 ## Latest Commit
 
-**Commit:** `5adde24`
-**Message:** fix: Update middleware to use getToken for Edge runtime compatibility
+**Commit:** `c84ff3a`
+**Message:** feat: Implement review management CRUD operations (Prompt 5)
 **Branch:** main
 
 ---
 
-## Authentication Features (Complete)
+## Review Management Features (Prompt 5 Complete)
 
-### Email/Password Authentication
-- Signup with email verification (Resend)
-- Login with credentials
-- Password reset flow
-- Rate limiting on auth endpoints
+### Review API
+- **Create Review**: Auto-detects language, runs sentiment analysis, checks quotas
+- **List Reviews**: Paginated with platform and sentiment filters
+- **Get Review**: Full details with response and version history
+- **Update Review**: Re-runs language detection if text changed
+- **Delete Review**: Cascades to response/versions, keeps audit trails
 
-### Google OAuth
-- Sign in with Google
-- **Account linking**: Users who signed up with email/password can also sign in with Google (same email)
-- Profile picture and name sync from Google
-- Email auto-verified for OAuth users
+### Language Detection
+- Uses `franc-min` library for 40+ language support
+- Shows confidence level (high/low based on text length)
+- Manual override option in UI
+- RTL support for Arabic, Hebrew, Persian, Urdu
 
-### Session Management
-- JWT-based sessions (30 days)
-- Protected routes via middleware
-- Logout functionality
+### Sentiment Analysis
+- Uses DeepSeek API for sentiment classification (positive/neutral/negative)
+- Fallback to keyword-based analysis if API unavailable
+- Respects user's monthly sentiment quota
+- Logs usage to SentimentUsage table for audit trail
 
----
+### Review UI Components
+- **ReviewForm**: Platform selector, text input with character counter, rating (1-5 stars), language detection display, manual override
+- **ReviewCard**: Platform badge, sentiment badge, rating display, response preview, edit/delete actions
+- **ReviewList**: Paginated list, platform filter, sentiment filter, clear filters button
 
-## Dashboard Features (Prompt 4 Complete)
-
-### Layout
-- **Sidebar**: Fixed left sidebar (desktop), Sheet drawer (mobile)
-- **Header**: Sticky header with credit badge and user dropdown
-- **Navigation**: Dashboard, Reviews, Settings links
-
-### Dashboard Page
-- Welcome message with user's name
-- Credit balance card (remaining/total, reset date)
-- Sentiment quota card (remaining/total, reset date)
-- Quick stats: Total reviews, AI responses, edit rate
-- Recent reviews list (last 5) with sentiment badges
-- Empty state for new users with "Add Review" CTA
-
-### Components Created
-- `Sidebar.tsx` - Navigation sidebar
-- `DashboardHeader.tsx` - Header with user menu
-- `StatsCard.tsx` - Metric display card
-- `QuotaCard.tsx` - Quota display with progress bar
-- `EmptyState.tsx` - Empty state display
-- `LoadingSpinner.tsx` - Loading indicators
-- `ErrorBoundary.tsx` - Error handling wrapper
+### Review Pages
+- `/dashboard/reviews` - List all reviews with filters and pagination
+- `/dashboard/reviews/new` - Add new review form
+- `/dashboard/reviews/[id]` - View review details, response, version history
+- `/dashboard/reviews/[id]/edit` - Edit existing review
 
 ---
 
 ## Notes for Next Session
 
-1. **Prompt 5** is next: Review Management (CRUD)
+1. **Prompt 6** is next: AI Response Generation (Claude)
 2. All environment variables are configured in `.env.local`
 3. Build passes successfully (`npm run build`)
-4. **Authentication is fully tested and working**
-5. **Dashboard layout is complete and responsive**
-6. Reference `docs/phase-0/IMPLEMENTATION_GUIDE.md` for Review Addition Flow
-7. Review pages needed:
-   - `/dashboard/reviews` - List all reviews
-   - `/dashboard/reviews/new` - Add new review
-   - `/dashboard/reviews/[id]` - View/edit single review
-8. Current user in database: `prajeen.builder@gmail.com` (has both credentials and Google linked)
+4. **Review management is fully implemented and working**
+5. Reference `docs/phase-0/IMPLEMENTATION_GUIDE.md` for Response Generation Flow
+6. Response generation will need:
+   - Claude API integration (`@anthropic-ai/sdk` already installed)
+   - Brand voice fetching for personalized responses
+   - Credit deduction and audit logging
+   - Response version history
+7. Current user in database: `prajeen.builder@gmail.com` (has both credentials and Google linked)
+8. **DeepSeek API key** is optional - fallback sentiment analysis works without it
