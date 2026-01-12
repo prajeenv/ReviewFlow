@@ -194,6 +194,7 @@ DEEPSEEK_API_KEY="sk-..."
 | OAuth account linking for existing users | Custom signIn callback auto-links Google accounts to existing users |
 | Dashboard layout auth state | Changed from server component to client component with `useSession` |
 | Tier limits mismatch | Updated constants to match CORE_SPECS.md (FREE: 15 credits, 35 sentiment) |
+| Middleware Edge runtime | Changed from `auth()` to `getToken()` for Edge runtime compatibility |
 
 ---
 
@@ -271,8 +272,8 @@ npx tsx scripts/test-db.ts
 
 ## Latest Commit
 
-**Commit:** `dcb4d79`
-**Message:** feat: Implement dashboard layout and navigation (Prompt 4)
+**Commit:** `5adde24`
+**Message:** fix: Update middleware to use getToken for Edge runtime compatibility
 **Branch:** main
 
 ---
