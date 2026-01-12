@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -88,13 +88,10 @@ function formatDate(dateString: string) {
   });
 }
 
-export default function ReviewDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function ReviewDetailPage() {
   const router = useRouter();
-  const { id } = use(params);
+  const params = useParams();
+  const id = params.id as string;
 
   const [review, setReview] = useState<ReviewDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
