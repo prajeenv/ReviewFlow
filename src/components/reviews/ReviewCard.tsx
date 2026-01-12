@@ -1,0 +1,266 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  Star,
+  MoreVertical,
+  Edit,
+  Trash2,
+  MessageSquare,
+  Clock,
+  Globe,
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getTextDirection } from "@/lib/language-detection";
+
+export interface ReviewCardData {
+  id: string;
+  platform: string;
+  reviewText: string;
+  rating: number | null;
+  reviewerName: string | null;
+  detectedLanguage: string;
+  sentiment: string | null;
+  createdAt: string;
+  response: {
+    id: string;
+    responseText: string;
+    isEdited: boolean;
+    isPublished: boolean;
+    createdAt: string;
+  } | null;
+}
+
+interface ReviewCardProps {
+  review: ReviewCardData;
+  onDelete?: (id: string) => void;
+}
+
+function getSentimentColor(sentiment: string | null) {
+  switch (sentiment) {
+    case "positive":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+    case "negative":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+    case "neutral":
+      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200";
+    default:
+      return "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
+  }
+}
+
+function formatTimeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+}
+
+export function ReviewCard({ review, onDelete }: ReviewCardProps) {
+  const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const textDirection = getTextDirection(review.detectedLanguage);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/reviews/${review.id}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Review deleted successfully");
+        setShowDeleteDialog(false);
+        onDelete?.(review.id);
+        router.refresh();
+      } else {
+        toast.error(result.error?.message || "Failed to delete review");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <Card className="transition-shadow hover:shadow-md">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-4">
+            {/* Rating/Platform icon */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+              {review.rating ? (
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="ml-0.5 text-xs font-medium">
+                    {review.rating}
+                  </span>
+                </div>
+              ) : (
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+
+            {/* Review content */}
+            <div className="flex-1 min-w-0">
+              {/* Badges row */}
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <Badge variant="outline" className="text-xs">
+                  {review.platform}
+                </Badge>
+                {review.sentiment && (
+                  <Badge
+                    className={`text-xs ${getSentimentColor(review.sentiment)}`}
+                    variant="secondary"
+                  >
+                    {review.sentiment}
+                  </Badge>
+                )}
+                {review.response && (
+                  <Badge variant="secondary" className="text-xs">
+                    <CheckCircle className="mr-1 h-3 w-3" />
+                    Responded
+                  </Badge>
+                )}
+                {review.detectedLanguage !== "English" && (
+                  <Badge variant="outline" className="text-xs">
+                    <Globe className="mr-1 h-3 w-3" />
+                    {review.detectedLanguage}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Review text */}
+              <Link href={`/dashboard/reviews/${review.id}`}>
+                <p
+                  className="text-sm line-clamp-2 hover:text-primary cursor-pointer"
+                  dir={textDirection}
+                >
+                  {review.reviewText}
+                </p>
+              </Link>
+
+              {/* Reviewer name */}
+              {review.reviewerName && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  - {review.reviewerName}
+                </p>
+              )}
+
+              {/* Response preview */}
+              {review.response && (
+                <div className="mt-3 p-2 bg-muted/50 rounded-md">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    AI Response:
+                  </p>
+                  <p className="text-sm line-clamp-2" dir={textDirection}>
+                    {review.response.responseText}
+                  </p>
+                </div>
+              )}
+
+              {/* Timestamp */}
+              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                {formatTimeAgo(review.createdAt)}
+              </div>
+            </div>
+
+            {/* Actions dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                  <span className="sr-only">Actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/reviews/${review.id}`}>
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    View Details
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/reviews/${review.id}/edit`}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Review
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Review</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this review? This action cannot be
+              undone. Any associated response and version history will also be
+              deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
