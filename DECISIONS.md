@@ -216,6 +216,20 @@ Fewer auth pages	Added /forgot-password, /reset-password, /verify-email, /error	
 - Empty state designs
 
 ---
+1. Significant Technical Decisions
+Decision	Reason
+Client-side layout with useSession	Changed from server component to client component for the dashboard layout to enable real-time updates of credit balance and mobile menu state management
+Separate API endpoint for dashboard stats	Created /api/dashboard/stats instead of embedding data in the layout to enable data refresh without full page reload and keep layout lightweight
+QuotaCard vs StatsCard separation	Split into two components - QuotaCard shows progress bars with reset dates (for credits/sentiment), StatsCard shows simple metrics with trends
+Mobile sidebar using Sheet component	Used shadcn/ui Sheet for mobile navigation instead of custom drawer for consistency and accessibility
+Toast notifications via Sonner	Sonner was already set up in Prompt 1; leveraged it for error notifications on dashboard load failures
+Tier limits aligned to CORE_SPECS.md	Updated constants to match spec (FREE: 15 credits, 35 sentiment instead of earlier values of 5/10)
+2. Deviations from Phase 0 Specifications
+Spec Said	What I Implemented	Why	Risk
+"Navbar.tsx" as separate component	Integrated into DashboardHeader	The header IS the top navigation bar; creating separate file would be redundant	Low - same functionality
+No specification for loading states	Added skeleton loading states	Better UX while data fetches	None - enhancement
+Review detail page link	Links to /dashboard/reviews/[id] (not yet implemented)	Following spec's planned route structure	Low - page will be built in Prompt 5
+
 
 ## Prompt 5: Review Management
 

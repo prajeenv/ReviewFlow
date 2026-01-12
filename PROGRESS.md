@@ -326,6 +326,54 @@ Commit: 4c90aa9 - feat: Implement complete authentication system (Prompt 3
 - [ ] Ensure responsive design
 
 ---
+3. What to Test
+Authentication Flow:
+
+Sign in and verify redirect to dashboard
+Verify user name displays in welcome message
+Test logout from user dropdown menu
+Dashboard Layout:
+
+Desktop: Verify sidebar is visible on left (64rem+)
+Mobile: Verify hamburger menu opens sheet sidebar
+Verify credit badge in header shows correct value
+Dashboard Stats:
+
+Verify quota cards show correct remaining/total
+Verify stats cards show 0 for new users
+Verify "Add Review" button is visible and links correctly
+Empty State:
+
+New user should see "No reviews yet" empty state
+CTA button should link to /dashboard/reviews/new
+Responsive Design:
+
+Test on mobile (< 640px)
+Test on tablet (640px - 1024px)
+Test on desktop (> 1024px)
+4. Before Moving to Next Prompt
+No additional setup required. Environment variables from Prompt 3 are sufficient.
+
+5. What Was Completed
+New Components Created:
+
+src/components/dashboard/Sidebar.tsx - Responsive sidebar navigation
+src/components/dashboard/DashboardHeader.tsx - Header with user menu & credits
+src/components/dashboard/StatsCard.tsx - StatsCard & QuotaCard components
+src/components/dashboard/EmptyState.tsx - Empty state & EmptyReviews
+src/components/shared/LoadingSpinner.tsx - Loading spinner & LoadingPage
+src/components/shared/ErrorBoundary.tsx - Error boundary & ErrorMessage
+New API Route:
+
+src/app/api/dashboard/stats/route.ts - Dashboard data endpoint
+Updated Files:
+
+src/app/(dashboard)/layout.tsx - Full dashboard layout with sidebar
+src/app/(dashboard)/dashboard/page.tsx - Dashboard with real stats
+src/lib/constants.ts - Fixed tier limits to match spec
+New UI Components (shadcn/ui):
+
+dropdown-menu, sheet, skeleton, tooltip, scroll-area
 
 ### ⏳ Prompt 5: Review Management
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
+import { getToken } from "next-auth/jwt";
 
 // Routes that require authentication
 const protectedRoutes = [
@@ -16,6 +16,7 @@ const protectedApiRoutes = [
   "/api/brand-voice",
   "/api/credits",
   "/api/user",
+  "/api/dashboard",
 ];
 
 // Routes that are only for unauthenticated users
@@ -42,11 +43,14 @@ export default async function middleware(request: NextRequest) {
   // Check if the request is for an auth route (signin, signup, etc.)
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  // Get the session
-  const session = await auth();
+  // Get the JWT token (works in Edge runtime)
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
 
   // Redirect unauthenticated users from protected routes to signin
-  if ((isProtectedRoute || isProtectedApiRoute) && !session) {
+  if ((isProtectedRoute || isProtectedApiRoute) && !token) {
     if (isProtectedApiRoute) {
       return NextResponse.json(
         {
@@ -66,7 +70,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users from auth routes to dashboard
-  if (isAuthRoute && session) {
+  if (isAuthRoute && token) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
