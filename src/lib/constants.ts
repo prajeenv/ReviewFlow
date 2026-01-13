@@ -27,6 +27,52 @@ export type Sentiment = (typeof SENTIMENTS)[number];
 export const RESPONSE_TONES = ["professional", "friendly", "empathetic"] as const;
 export type ResponseTone = (typeof RESPONSE_TONES)[number];
 
+// Brand voice tones (for brand voice configuration)
+export const BRAND_VOICE_TONES = ["professional", "friendly", "casual", "empathetic"] as const;
+export type BrandVoiceTone = (typeof BRAND_VOICE_TONES)[number];
+
+// Brand voice tone descriptions
+export const BRAND_VOICE_TONE_INFO: Record<BrandVoiceTone, { label: string; description: string; icon: string }> = {
+  professional: {
+    label: "Professional",
+    description: "Formal, business-like, and polished responses",
+    icon: "briefcase",
+  },
+  friendly: {
+    label: "Friendly",
+    description: "Warm, approachable, and personable responses",
+    icon: "smile",
+  },
+  casual: {
+    label: "Casual",
+    description: "Relaxed, conversational, and informal responses",
+    icon: "coffee",
+  },
+  empathetic: {
+    label: "Empathetic",
+    description: "Understanding, compassionate, and supportive responses",
+    icon: "heart",
+  },
+};
+
+// Formality level labels
+export const FORMALITY_LABELS = [
+  "Very Casual",
+  "Casual",
+  "Balanced",
+  "Formal",
+  "Very Formal",
+] as const;
+
+// Brand voice limits
+export const BRAND_VOICE_LIMITS = {
+  KEY_PHRASES_MAX: 20,
+  SAMPLE_RESPONSES_MAX: 5,
+  STYLE_NOTES_MAX: 500,
+  KEY_PHRASE_MAX_LENGTH: 100,
+  SAMPLE_RESPONSE_MAX_LENGTH: 500,
+} as const;
+
 // User subscription tiers
 export const SUBSCRIPTION_TIERS = ["FREE", "STARTER", "GROWTH"] as const;
 export type SubscriptionTier = (typeof SUBSCRIPTION_TIERS)[number];

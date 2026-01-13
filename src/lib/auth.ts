@@ -26,23 +26,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
-        const email = credentials.email as string;
+        const email = (credentials.email as string).toLowerCase().trim();
         const password = credentials.password as string;
 
         const user = await prisma.user.findUnique({
           where: { email },
         });
 
-        if (!user || !user.password) {
-          throw new Error("Invalid credentials");
+        if (!user) {
+          return null;
+        }
+
+        if (!user.password) {
+          // OAuth only account - no password set
+          return null;
         }
 
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
         if (!user.emailVerified) {
@@ -77,12 +82,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log("SignIn callback triggered:", {
-        provider: account?.provider,
-        email: user.email,
-        userId: user.id,
-      });
-
       // Handle Google OAuth sign-in
       if (account?.provider === "google" && user.email) {
         // Check if user already exists with this email
@@ -113,7 +112,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 id_token: account.id_token,
               },
             });
-            console.log("Linked Google account to existing user:", user.email);
           }
 
           // Update emailVerified if not already verified

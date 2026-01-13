@@ -102,12 +102,20 @@ export const updateResponseSchema = z.object({
 
 // Brand voice schemas
 export const brandVoiceSchema = z.object({
-  tone: z.string().min(1, "Tone is required").max(50),
-  formality: z.number().min(1).max(5),
-  keyPhrases: z.array(z.string().max(100)).max(10).optional().default([]),
-  avoidPhrases: z.array(z.string().max(100)).max(10).optional().default([]),
-  styleNotes: z.string().max(500).optional().nullable(),
-  signatureClosing: z.string().max(100).optional().nullable(),
+  tone: z.enum(["professional", "friendly", "casual", "empathetic"], {
+    message: "Please select a valid tone",
+  }),
+  formality: z.number().min(1, "Formality must be at least 1").max(5, "Formality must be at most 5"),
+  keyPhrases: z.array(z.string().max(100, "Key phrase too long")).max(20, "Maximum 20 key phrases").optional().default([]),
+  styleNotes: z.string().max(500, "Style notes must be under 500 characters").optional().nullable(),
+  sampleResponses: z.array(z.string().max(500, "Sample response too long")).max(5, "Maximum 5 sample responses").optional().default([]),
+});
+
+// Test brand voice schema (for testing with sample review)
+export const testBrandVoiceSchema = z.object({
+  reviewText: z.string().min(1, "Review text is required").max(2000, "Review text too long"),
+  platform: z.enum(PLATFORMS).optional().default("Google"),
+  rating: z.number().min(1).max(5).optional().nullable(),
 });
 
 // User profile schemas
@@ -143,6 +151,7 @@ export type GenerateResponseInput = z.infer<typeof generateResponseSchema>;
 export type RegenerateResponseInput = z.infer<typeof regenerateResponseSchema>;
 export type UpdateResponseInput = z.infer<typeof updateResponseSchema>;
 export type BrandVoiceInput = z.infer<typeof brandVoiceSchema>;
+export type TestBrandVoiceInput = z.infer<typeof testBrandVoiceSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type ReviewFiltersInput = z.infer<typeof reviewFiltersSchema>;
