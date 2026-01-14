@@ -106,6 +106,12 @@ export function CollapsibleTextItem({
     }
   };
 
+  // Calculate dynamic rows for textarea: min 3, max 10, based on content lines
+  const calculateRows = (text: string): number => {
+    const lineCount = text.split("\n").length;
+    return Math.max(3, Math.min(10, lineCount));
+  };
+
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -175,7 +181,7 @@ export function CollapsibleTextItem({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               maxLength={maxLength}
-              rows={10}
+              rows={calculateRows(editValue)}
               className="resize-none"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
