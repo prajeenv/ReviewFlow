@@ -4,3 +4,4 @@ export { FormalitySlider } from "./FormalitySlider";
 export { KeyPhrasesInput } from "./KeyPhrasesInput";
 export { SampleResponsesInput } from "./SampleResponsesInput";
 export { TestResponsePanel } from "./TestResponsePanel";
+export { StyleGuidelinesInput } from "./StyleGuidelinesInput";

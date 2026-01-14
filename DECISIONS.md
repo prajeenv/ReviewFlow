@@ -242,6 +242,27 @@ Review detail page link	Links to /dashboard/reviews/[id] (not yet implemented)	F
 - Search implementation (client vs server)
 
 ---
+1. Significant Technical Decisions and Reasons
+Decision	Reason
+Fallback sentiment analysis	DeepSeek API may not always be available or configured. Added keyword-based fallback that works without API key, ensuring sentiment is always analyzed.
+Zod v4 .issues instead of .errors	Zod v4 changed the error structure. Updated API routes to use .issues for accessing validation errors.
+Debounced language detection (500ms)	Avoids excessive language detection calls while user is typing. Only detects after user pauses for 500ms.
+Language detection confidence threshold	Text < 10 chars defaults to English with "low" confidence. Text >= 50 chars gets "high" confidence. This helps users know when to verify/override.
+Duplicate review prevention (5-minute window)	Prevents accidental double-submission by checking for same userId + reviewText within 5 minutes.
+Sentiment quota check before analysis	Respects user's monthly quota; if exceeded, review is still created but sentiment is null with a warning message.
+Cascade delete with audit trail preservation	Review deletion cascades to response/versions (Cascade), but CreditUsage and SentimentUsage keep their records (SetNull) for audit purposes.
+RTL language support in UI	Arabic, Hebrew, Persian, Urdu display right-to-left using dir attribute on text containers.
+Platform filter uses exact match	Filters use the exact platform string from constants rather than case-insensitive matching for consistency.
+![alt text](image.png)
+
+2. Deviations from Phase 0 Specifications
+Spec Said	Implemented	Why Deviated	Impact/Risk
+API base URL /api/v1	Used /api (no version prefix)	Next.js App Router convention; versioning can be added later if needed	Low - easy to add /v1 prefix later
+DeepSeek required for sentiment	Made DeepSeek optional with fallback	Allows testing without API key; ensures feature works even if API is down	Low - fallback has lower accuracy but is functional
+Sentiment cost 0.3 credits	Sentiment counts against separate sentimentQuota, not credits	This matches the schema design where sentiment has its own quota (35/150/500 per tier)	None - follows schema design
+externalId and externalUrl in create	Available in schema but not in create form UI	These are for future platform integrations (CSV import), not manual entry	Low - can add to form when needed
+
+![alt text](image-1.png)
 
 ## Prompt 6: Brand Voice
 
@@ -252,6 +273,62 @@ Review detail page link	Links to /dashboard/reviews/[id] (not yet implemented)	F
 - Formality scale interpretation
 - Sample response storage format
 - Brand voice prompt engineering approach
+
+### 1. Technical Decisions Made
+
+| Decision | Reason |
+|----------|--------|
+| Used claude-sonnet-4-20250514 model | Latest Claude Sonnet model for response generation as specified in CORE_SPECS |
+| Created separate /api/brand-voice/test endpoint | Allows users to test brand voice without credit deduction |
+| Prefixed callback params with underscore in interfaces | Silences ESLint warnings for unused parameters in type definitions |
+| Used upsert for brand voice updates | Handles both create and update in single operation |
+| Added default brand voice creation in GET endpoint | Ensures users always have brand voice settings available |
+| Built modular UI components | ToneSelector, FormalitySlider, etc. can be reused in future features |
+| Added retry logic with exponential backoff | Handles transient Claude API errors (429 rate limit, 529 overloaded) with up to 3 retries |
+| Strengthened key phrase instruction in prompt | Changed from "include when appropriate" to "REQUIRED... MUST incorporate 1-2" for better adherence |
+| Added formality descriptions to UI | Shows user-friendly descriptions like "Balanced mix of professional and approachable" below slider |
+| **Implemented auto-save with debounce** | **Better UX - changes save automatically after 1.5s of inactivity, no manual save button needed** |
+| Replaced textarea with structured list for Style Guidelines | Better UX - each guideline as separate input field, numbered list, add/remove buttons |
+| JSON serialization for style guidelines | Safer than newline-separated; handles special characters; backward compatible with legacy format |
+| Style Guidelines limits: 5 max, 200 chars each | Reasonable limits to keep prompts focused; can be increased if needed |
+
+### 2. Deviations from Phase 0 Specifications
+
+| Spec | Implementation | Why | Risk |
+|------|----------------|-----|------|
+| Spec had 4 tones: friendly/professional/casual/formal | Implemented: professional/friendly/casual/empathetic | "empathetic" is more useful for review responses than "formal" (covered by formality slider). CORE_SPECS also mentions "empathetic" in tone options | Low ✅ |
+| Spec mentioned avoidPhrases and signatureClosing in validation schema | Not implemented in UI | These were in a previous validation schema but not in the Prisma BrandVoice model. Can be added later if needed | Low ✅ |
+| Manual "Save Changes" button | Auto-save with status indicator | Improves UX - users don't need to remember to click save, changes persist automatically | Low ✅ |
+
+### 3. Key Implementation Details
+
+**Auto-Save Feature:**
+- 1.5 second debounce delay prevents excessive API calls
+- Visual status indicator: "Saved" (green cloud), "Unsaved" (yellow cloud-off), "Saving..." (spinner)
+- Prevents data loss from users forgetting to save
+- `isInitialized` flag prevents auto-save on initial page load
+
+**Retry Logic for Claude API:**
+- Exponential backoff: 1s → 2s → 4s between retries
+- Only retries on transient errors (429 rate limit, 529 overloaded)
+- Logs retry attempts for debugging
+
+**Formality Descriptions (UI):**
+
+| Level | Label | Description |
+|-------|-------|-------------|
+| 1 | Very Casual | Very casual and conversational, like talking to a friend |
+| 2 | Casual | Casual but still polite and friendly |
+| 3 | Balanced | Balanced mix of professional and approachable |
+| 4 | Formal | Formal and professional with proper business language |
+| 5 | Very Formal | Very formal, polished, and highly professional |
+
+**Style Guidelines (Structured List Input):**
+- Replaced free-form textarea with numbered list of individual input fields
+- Each guideline can be added, edited in-place, or removed
+- Max 5 guidelines, 200 characters each
+- Stored as JSON array in database string field (backward compatible)
+- New `StyleGuidelinesInput` component created for reusability
 
 ---
 
