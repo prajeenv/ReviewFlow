@@ -5,3 +5,4 @@ export { KeyPhrasesInput } from "./KeyPhrasesInput";
 export { SampleResponsesInput } from "./SampleResponsesInput";
 export { TestResponsePanel } from "./TestResponsePanel";
 export { StyleGuidelinesInput } from "./StyleGuidelinesInput";
+export { CollapsibleTextItem } from "./CollapsibleTextItem";

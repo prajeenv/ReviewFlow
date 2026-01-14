@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { X, Plus, GripVertical } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Plus } from "lucide-react";
+import { CollapsibleTextItem } from "./CollapsibleTextItem";
 
 interface StyleGuidelinesInputProps {
   value: string[];
@@ -17,7 +19,7 @@ export function StyleGuidelinesInput({
   value,
   onChange,
   disabled,
-  maxGuidelines = 10,
+  maxGuidelines = 5,
   maxLength = 200,
 }: StyleGuidelinesInputProps) {
   const [inputValue, setInputValue] = useState("");
@@ -42,8 +44,9 @@ export function StyleGuidelinesInput({
     onChange(newGuidelines);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Allow Ctrl+Enter or Cmd+Enter to add
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       addGuideline();
     }
@@ -57,53 +60,57 @@ export function StyleGuidelinesInput({
       {value.length > 0 && (
         <div className="space-y-2">
           {value.map((guideline, index) => (
-            <div key={index} className="flex items-center gap-2 group">
-              <GripVertical className="h-4 w-4 text-muted-foreground/50" />
-              <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
-              <Input
-                value={guideline}
-                onChange={(e) => updateGuideline(index, e.target.value)}
-                disabled={disabled}
-                maxLength={maxLength}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeGuideline(index)}
-                disabled={disabled}
-                className="h-8 w-8 opacity-50 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <CollapsibleTextItem
+              key={index}
+              value={guideline}
+              onChange={(newValue) => updateGuideline(index, newValue)}
+              onRemove={() => removeGuideline(index)}
+              disabled={disabled}
+              maxLength={maxLength}
+              index={index}
+              totalCount={value.length}
+              placeholder="Enter a style guideline..."
+              maxCollapsedLines={3}
+              itemLabel="guideline"
+            />
           ))}
         </div>
       )}
 
-      {/* Add new guideline */}
+      {/* Add new guideline - distinct card with dashed border */}
       {canAddMore && (
-        <div className="flex gap-2">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Add a style guideline..."
-            disabled={disabled}
-            maxLength={maxLength}
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={addGuideline}
-            disabled={disabled || !inputValue.trim()}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
+        <Card className="p-4 border-dashed border-2 border-muted-foreground/30 bg-muted/20">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Plus className="h-4 w-4" />
+              <span>Add New Guideline</span>
+            </div>
+            <Textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Enter a style guideline... (supports multiple lines)"
+              disabled={disabled}
+              maxLength={maxLength}
+              rows={3}
+              className="resize-none bg-background"
+            />
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">
+                {inputValue.length} / {maxLength} • Ctrl+Enter to add
+              </span>
+              <Button
+                type="button"
+                onClick={addGuideline}
+                disabled={disabled || !inputValue.trim()}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Guideline
+              </Button>
+            </div>
+          </div>
+        </Card>
       )}
 
       {/* Counter and hint */}

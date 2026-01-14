@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, X, GripVertical } from "lucide-react";
+import { Plus } from "lucide-react";
 import { BRAND_VOICE_LIMITS } from "@/lib/constants";
+import { CollapsibleTextItem } from "./CollapsibleTextItem";
 
 interface SampleResponsesInputProps {
   value: string[];
@@ -40,6 +41,14 @@ export function SampleResponsesInput({ value, onChange, disabled }: SampleRespon
     onChange(newResponses);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Allow Ctrl+Enter or Cmd+Enter to add
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      addResponse();
+    }
+  };
+
   const canAddMore = value.length < BRAND_VOICE_LIMITS.SAMPLE_RESPONSES_MAX;
 
   return (
@@ -48,71 +57,57 @@ export function SampleResponsesInput({ value, onChange, disabled }: SampleRespon
       {value.length > 0 && (
         <div className="space-y-3">
           {value.map((response, index) => (
-            <Card key={index} className="p-3">
-              <div className="flex items-start gap-2">
-                <GripVertical className="h-5 w-5 text-muted-foreground mt-2 flex-shrink-0" />
-                <div className="flex-1">
-                  <Textarea
-                    value={response}
-                    onChange={(e) => updateResponse(index, e.target.value)}
-                    disabled={disabled}
-                    maxLength={BRAND_VOICE_LIMITS.SAMPLE_RESPONSE_MAX_LENGTH}
-                    rows={2}
-                    className="resize-none"
-                  />
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-xs text-muted-foreground">
-                      {response.length} / {BRAND_VOICE_LIMITS.SAMPLE_RESPONSE_MAX_LENGTH}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Sample #{index + 1}
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeResponse(index)}
-                  disabled={disabled}
-                  className="flex-shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
+            <CollapsibleTextItem
+              key={index}
+              value={response}
+              onChange={(newValue) => updateResponse(index, newValue)}
+              onRemove={() => removeResponse(index)}
+              disabled={disabled}
+              maxLength={BRAND_VOICE_LIMITS.SAMPLE_RESPONSE_MAX_LENGTH}
+              index={index}
+              totalCount={value.length}
+              placeholder="Enter a sample response..."
+              maxCollapsedLines={3}
+              itemLabel="sample"
+            />
           ))}
         </div>
       )}
 
-      {/* Add new response */}
+      {/* Add new response - distinct card with dashed border */}
       {canAddMore && (
-        <div className="space-y-2">
-          <Textarea
-            value={newResponse}
-            onChange={(e) => setNewResponse(e.target.value)}
-            disabled={disabled}
-            placeholder="Add a sample response that represents your ideal tone and style..."
-            maxLength={BRAND_VOICE_LIMITS.SAMPLE_RESPONSE_MAX_LENGTH}
-            rows={3}
-            className="resize-none"
-          />
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-muted-foreground">
-              {newResponse.length} / {BRAND_VOICE_LIMITS.SAMPLE_RESPONSE_MAX_LENGTH}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addResponse}
-              disabled={disabled || !newResponse.trim()}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Sample
-            </Button>
+        <Card className="p-4 border-dashed border-2 border-muted-foreground/30 bg-muted/20">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Plus className="h-4 w-4" />
+              <span>Add New Sample Response</span>
+            </div>
+            <Textarea
+              value={newResponse}
+              onChange={(e) => setNewResponse(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={disabled}
+              placeholder="Add a sample response that represents your ideal tone and style..."
+              maxLength={BRAND_VOICE_LIMITS.SAMPLE_RESPONSE_MAX_LENGTH}
+              rows={4}
+              className="resize-none bg-background"
+            />
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">
+                {newResponse.length} / {BRAND_VOICE_LIMITS.SAMPLE_RESPONSE_MAX_LENGTH} • Ctrl+Enter to add
+              </span>
+              <Button
+                type="button"
+                onClick={addResponse}
+                disabled={disabled || !newResponse.trim()}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Sample
+              </Button>
+            </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Counter */}

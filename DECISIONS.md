@@ -291,6 +291,7 @@ externalId and externalUrl in create	Available in schema but not in create form 
 | Replaced textarea with structured list for Style Guidelines | Better UX - each guideline as separate input field, numbered list, add/remove buttons |
 | JSON serialization for style guidelines | Safer than newline-separated; handles special characters; backward compatible with legacy format |
 | Style Guidelines limits: 5 max, 200 chars each | Reasonable limits to keep prompts focused; can be increased if needed |
+| **CollapsibleTextItem reusable component** | **Unified UX for Style Guidelines and Sample Responses: read-only by default, edit on click, collapsible (max 3 lines), expand on click** |
 
 ### 2. Deviations from Phase 0 Specifications
 
@@ -329,6 +330,18 @@ externalId and externalUrl in create	Available in schema but not in create form 
 - Max 5 guidelines, 200 characters each
 - Stored as JSON array in database string field (backward compatible)
 - New `StyleGuidelinesInput` component created for reusability
+
+**CollapsibleTextItem Component (Unified UX for Style Guidelines & Sample Responses):**
+- Created reusable `CollapsibleTextItem` component for consistent behavior
+- Features:
+  - **Read-only by default**: Items display as text, not editable fields
+  - **Edit on click**: Pencil icon or card click enters edit mode
+  - **Collapsible view**: Shows max 3 lines when collapsed (configurable)
+  - **Expand on click**: Chevron button to expand/collapse long content
+  - **Multiline support**: Both Style Guidelines and Sample Responses now support multiline text
+  - **Keyboard shortcuts**: Ctrl+Enter to save, Escape to cancel
+- Applied to both `StyleGuidelinesInput` and `SampleResponsesInput` components
+- `maxCollapsedLines` prop allows customization per use case
 
 ---
 
