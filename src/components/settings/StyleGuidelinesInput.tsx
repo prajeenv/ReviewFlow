@@ -54,6 +54,12 @@ export function StyleGuidelinesInput({
 
   const canAddMore = value.length < maxGuidelines;
 
+  // Calculate dynamic rows: min 3, max 10
+  const calculateRows = (text: string): number => {
+    const lineCount = text.split("\n").length;
+    return Math.max(3, Math.min(10, lineCount));
+  };
+
   return (
     <div className="space-y-3">
       {/* Existing guidelines list */}
@@ -92,7 +98,7 @@ export function StyleGuidelinesInput({
               placeholder="Enter a style guideline... (supports multiple lines)"
               disabled={disabled}
               maxLength={maxLength}
-              rows={3}
+              rows={calculateRows(inputValue)}
               className="resize-none bg-background"
             />
             <div className="flex justify-between items-center">

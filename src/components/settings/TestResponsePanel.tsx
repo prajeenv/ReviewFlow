@@ -108,6 +108,12 @@ export function TestResponsePanel({ disabled }: TestResponsePanelProps) {
     setRating(sample.rating);
   };
 
+  // Calculate dynamic rows: min 3, max 10
+  const calculateRows = (text: string): number => {
+    const lineCount = text.split("\n").length;
+    return Math.max(3, Math.min(10, lineCount));
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -144,7 +150,7 @@ export function TestResponsePanel({ disabled }: TestResponsePanelProps) {
             value={reviewText}
             onChange={(e) => setReviewText(e.target.value)}
             placeholder="Enter a sample customer review to test your brand voice..."
-            rows={4}
+            rows={calculateRows(reviewText)}
             maxLength={2000}
             disabled={disabled || isLoading}
           />

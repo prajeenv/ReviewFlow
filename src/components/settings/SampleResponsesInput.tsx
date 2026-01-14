@@ -51,6 +51,12 @@ export function SampleResponsesInput({ value, onChange, disabled }: SampleRespon
 
   const canAddMore = value.length < BRAND_VOICE_LIMITS.SAMPLE_RESPONSES_MAX;
 
+  // Calculate dynamic rows: min 3, max 10
+  const calculateRows = (text: string): number => {
+    const lineCount = text.split("\n").length;
+    return Math.max(3, Math.min(10, lineCount));
+  };
+
   return (
     <div className="space-y-4">
       {/* Existing responses */}
@@ -89,7 +95,7 @@ export function SampleResponsesInput({ value, onChange, disabled }: SampleRespon
               disabled={disabled}
               placeholder="Add a sample response that represents your ideal tone and style..."
               maxLength={BRAND_VOICE_LIMITS.SAMPLE_RESPONSE_MAX_LENGTH}
-              rows={4}
+              rows={calculateRows(newResponse)}
               className="resize-none bg-background"
             />
             <div className="flex justify-between items-center">
