@@ -45,6 +45,13 @@ function getFormalityDescription(level: number): string {
 }
 
 /**
+ * Helper to delay execution
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Generate a response to a review using Claude AI
  */
 export async function generateReviewResponse(
@@ -79,33 +86,56 @@ export async function generateReviewResponse(
     isTestMode,
   });
 
-  try {
-    const response = await client.messages.create({
-      model: DEFAULT_MODEL,
-      max_tokens: 500,
-      messages: [
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-      system: systemPrompt,
-    });
+  // Retry logic for transient errors (429 rate limit, 529 overloaded)
+  const maxRetries = 3;
+  let lastError: Error | null = null;
 
-    // Extract text from response
-    const textContent = response.content.find((block) => block.type === "text");
-    if (!textContent || textContent.type !== "text") {
-      throw new Error("No text response received from Claude");
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await client.messages.create({
+        model: DEFAULT_MODEL,
+        max_tokens: 500,
+        messages: [
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+        system: systemPrompt,
+      });
+
+      // Extract text from response
+      const textContent = response.content.find((block) => block.type === "text");
+      if (!textContent || textContent.type !== "text") {
+        throw new Error("No text response received from Claude");
+      }
+
+      return {
+        responseText: textContent.text.trim(),
+        model: response.model,
+      };
+    } catch (error) {
+      lastError = error as Error;
+      const isRetryable =
+        error instanceof Anthropic.APIError &&
+        (error.status === 429 || error.status === 529);
+
+      if (isRetryable && attempt < maxRetries) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        console.log(
+          `Claude API error (${error.status}), retrying in ${delay}ms... (attempt ${attempt}/${maxRetries})`
+        );
+        await sleep(delay);
+        continue;
+      }
+
+      console.error("Claude API error:", error);
+      throw error;
     }
-
-    return {
-      responseText: textContent.text.trim(),
-      model: response.model,
-    };
-  } catch (error) {
-    console.error("Claude API error:", error);
-    throw error;
   }
+
+  throw lastError;
 }
 
 /**
@@ -132,7 +162,7 @@ BRAND VOICE CONFIGURATION:
 - Formality Level: ${getFormalityDescription(formality)}`;
 
   if (keyPhrases.length > 0) {
-    prompt += `\n- Key Phrases to include when appropriate: ${keyPhrases.join(", ")}`;
+    prompt += `\n- REQUIRED Key Phrases (you MUST incorporate at least 1-2 of these naturally): ${keyPhrases.join(", ")}`;
   }
 
   if (styleNotes) {

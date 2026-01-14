@@ -1,7 +1,7 @@
 "use client";
 
 import { Slider } from "@/components/ui/slider";
-import { FORMALITY_LABELS } from "@/lib/constants";
+import { FORMALITY_LABELS, FORMALITY_DESCRIPTIONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface FormalitySliderProps {
@@ -42,11 +42,14 @@ export function FormalitySlider({ value, onChange, disabled }: FormalitySliderPr
         ))}
       </div>
 
-      {/* Current value indicator */}
-      <div className="text-center">
+      {/* Current value indicator with description */}
+      <div className="text-center space-y-2">
         <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
           Level {value}: {FORMALITY_LABELS[value - 1]}
         </span>
+        <p className="text-sm text-muted-foreground">
+          {FORMALITY_DESCRIPTIONS[value - 1]}
+        </p>
       </div>
     </div>
   );

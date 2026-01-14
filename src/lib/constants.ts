@@ -64,6 +64,15 @@ export const FORMALITY_LABELS = [
   "Very Formal",
 ] as const;
 
+// Formality level descriptions (for UI display)
+export const FORMALITY_DESCRIPTIONS = [
+  "Very casual and conversational, like talking to a friend",
+  "Casual but still polite and friendly",
+  "Balanced mix of professional and approachable",
+  "Formal and professional with proper business language",
+  "Very formal, polished, and highly professional",
+] as const;
+
 // Brand voice limits
 export const BRAND_VOICE_LIMITS = {
   KEY_PHRASES_MAX: 20,
