@@ -545,7 +545,7 @@ Test the brand voice test panel with different review texts and tones
 1. On a review with existing response, click "Regenerate" button
 2. Select different tone in dialog
 3. Click "Regenerate" - verify new response appears
-4. Verify 0.5 credits deducted
+4. Verify 1 credit deducted
 5. Check version history shows previous version
 
 **Edit Flow:**

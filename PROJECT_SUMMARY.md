@@ -1,8 +1,8 @@
 # ReviewFlow Project Summary
 
-**Last Updated:** January 13, 2026
+**Last Updated:** January 15, 2026
 **Repository:** https://github.com/prajeenv/ReviewFlow
-**Current Status:** Prompt 6 Complete - Ready for Prompt 7
+**Current Status:** Prompt 7 Complete - Ready for Prompt 8
 
 ---
 
@@ -78,6 +78,20 @@ Reviews added → AI generates response in same language → User edits (optiona
 - TestResponsePanel for testing brand voice with sample reviews
 - Settings overview page with navigation
 
+### Prompt 7: AI Response Generation ✅
+- Claude API integration with tone modifiers (professional/friendly/empathetic)
+- POST `/api/reviews/[id]/generate` - Initial generation (1.0 credit)
+- POST `/api/reviews/[id]/regenerate` - Regenerate with tone (1.0 credit)
+- PUT `/api/reviews/[id]/response` - Manual edit (0 credits)
+- POST `/api/reviews/[id]/publish` - Mark as approved
+- DELETE `/api/reviews/[id]/response` - Delete response
+- ResponsePanel component for response display and actions
+- ResponseEditor component for inline editing with char counter
+- ToneModifier dialog for regeneration tone selection
+- ResponseVersionHistory with restore capability
+- Atomic credit deduction with Prisma transactions
+- Version history tracking on every change
+
 ---
 
 ## Tech Stack
@@ -122,8 +136,9 @@ reviewflow/
 │   │   │       │   ├── page.tsx    # Reviews list with filters
 │   │   │       │   ├── new/page.tsx        # Add new review
 │   │   │       │   └── [id]/
-│   │   │       │       ├── page.tsx        # Review detail
-│   │   │       │       └── edit/page.tsx   # Edit review
+│   │   │       │       ├── page.tsx        # Review detail with ResponsePanel
+│   │   │       │       ├── edit/page.tsx   # Edit review
+│   │   │       │       └── generate/page.tsx  # Generate response page (Prompt 7)
 │   │   │       └── settings/       # Settings pages (Prompt 6)
 │   │   │           ├── page.tsx    # Settings overview
 │   │   │           └── brand-voice/page.tsx  # Brand voice config
@@ -136,14 +151,20 @@ reviewflow/
 │   │       └── brand-voice/  # Brand Voice API (Prompt 6)
 │   │           ├── route.ts        # GET, PUT
 │   │           └── test/route.ts   # POST (test with sample)
+│   │       # Response Generation API (Prompt 7) - in reviews/[id]/ folder
+│   │       # generate/route.ts, regenerate/route.ts, response/route.ts, publish/route.ts
 │   ├── components/
 │   │   ├── ui/             # shadcn/ui components (19 components)
 │   │   ├── auth/           # LoginForm, SignupForm
 │   │   ├── dashboard/      # Dashboard components (Prompt 4)
-│   │   ├── reviews/        # Review components (Prompt 5)
+│   │   ├── reviews/        # Review components (Prompt 5 & 7)
 │   │   │   ├── ReviewForm.tsx      # Add/edit review form
 │   │   │   ├── ReviewCard.tsx      # Review card display
 │   │   │   ├── ReviewList.tsx      # Paginated list with filters
+│   │   │   ├── ResponsePanel.tsx   # Response display/actions (Prompt 7)
+│   │   │   ├── ResponseEditor.tsx  # Inline response editor (Prompt 7)
+│   │   │   ├── ToneModifier.tsx    # Regeneration tone dialog (Prompt 7)
+│   │   │   ├── ResponseVersionHistory.tsx  # Version history (Prompt 7)
 │   │   │   └── index.ts
 │   │   ├── settings/       # Settings components (Prompt 6)
 │   │   │   ├── BrandVoiceForm.tsx  # Main brand voice form
@@ -262,7 +283,7 @@ DEEPSEEK_API_KEY="sk-..."           # For sentiment analysis (optional - has fal
 
 **Credit Costs:**
 - Response generation: 1.0 credits
-- Response regeneration: 0.5 credits
+- Response regeneration: 1.0 credit
 - Sentiment analysis: 0.3 (against sentiment quota)
 
 ---
@@ -293,6 +314,13 @@ DEEPSEEK_API_KEY="sk-..."           # For sentiment analysis (optional - has fal
 - `PUT /api/brand-voice` - Update brand voice settings
 - `POST /api/brand-voice/test` - Test with sample review (free, no credit deduction)
 
+### Response Generation (Prompt 7)
+- `POST /api/reviews/[id]/generate` - Generate AI response (1.0 credit)
+- `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (1.0 credit)
+- `PUT /api/reviews/[id]/response` - Edit response manually (0 credits)
+- `POST /api/reviews/[id]/publish` - Mark response as approved
+- `DELETE /api/reviews/[id]/response` - Delete response and versions
+
 ---
 
 ## UI Components (shadcn/ui)
@@ -301,17 +329,17 @@ DEEPSEEK_API_KEY="sk-..."           # For sentiment analysis (optional - has fal
 - button, input, label, card, textarea, badge, select, dialog
 - avatar, separator, dropdown-menu, sheet, skeleton, tooltip, scroll-area
 - slider (added in Prompt 6)
+- alert, alert-dialog, radio-group, collapsible (added in Prompt 7)
 
 ---
 
-## Remaining Prompts (7-10)
+## Remaining Prompts (8-10)
 
 | Prompt | Description |
 |--------|-------------|
-| **7** | AI Response Generation - Generate responses for reviews using Claude + brand voice |
-| **8** | Response Editing & Publishing - Edit responses, mark as published |
-| **9** | Credit System & Usage Tracking - Credit deduction, usage history |
-| **10** | Settings & User Profile - Account settings, profile management |
+| **8** | Sentiment Analysis - DeepSeek API improvements, batch analysis, quota tracking |
+| **9** | Credit System - Usage history page, low credit warnings, monthly reset cron |
+| **10** | Testing & Deployment - E2E testing, multi-language verification, Vercel deployment |
 
 ---
 
@@ -337,8 +365,8 @@ npx tsx scripts/test-db.ts
 
 ## Latest Commit
 
-**Commit:** `2a7a015`
-**Message:** feat: Implement brand voice configuration system (Prompt 6)
+**Commit:** `269b88f`
+**Message:** feat: Implement AI response generation with Claude API (Prompt 7)
 **Branch:** main
 
 ---
@@ -383,20 +411,46 @@ When user signs up or accesses brand voice for first time:
 
 ---
 
+## AI Response Generation Features (Prompt 7 Complete)
+
+### Response Generation API
+- **POST /api/reviews/[id]/generate**: Initial response generation (1.0 credit)
+- **POST /api/reviews/[id]/regenerate**: Regenerate with tone modifier (1.0 credit)
+- **PUT /api/reviews/[id]/response**: Manual edit (0 credits, marks as edited)
+- **POST /api/reviews/[id]/publish**: Mark response as approved
+- **DELETE /api/reviews/[id]/response**: Delete response and all versions
+
+### Tone Modifiers for Regeneration
+- `professional` - Business-like, courteous, maintaining formal tone
+- `friendly` - Warm, personable, like helping a friend
+- `empathetic` - Understanding, compassionate, showing genuine care
+
+### UI Components Created
+- **ResponsePanel**: Main response display with all actions (view, edit, regenerate, copy, approve, delete)
+- **ResponseEditor**: Inline text editor with character counter (max 500)
+- **ToneModifier**: Dialog for selecting regeneration tone with credit cost display
+- **ResponseVersionHistory**: Collapsible version list with restore capability
+
+### Version History
+- Every change (generate, regenerate, edit, restore) creates a ResponseVersion entry
+- Users can view history and restore previous versions
+- Restore creates a new version (doesn't overwrite history)
+
+---
+
 ## Notes for Next Session
 
-1. **Prompt 7** is next: AI Response Generation
-2. **ANTHROPIC_API_KEY is REQUIRED** for response generation
-3. All environment variables are configured in `.env.local`
-4. Brand voice configuration is fully functional and tested
-5. Reference `docs/phase-0/CORE_SPECS.md` for response generation API contracts
-6. Prompt 7 will need:
-   - POST `/api/reviews/[id]/generate` - Generate AI response for a review
-   - POST `/api/reviews/[id]/regenerate` - Regenerate with different tone
-   - Credit deduction logic (1.0 for generate, 0.5 for regenerate)
-   - Integration with existing brand voice settings
-   - Response storage in ReviewResponse table
-   - Version history in ResponseVersion table
-7. Current user in database: `prajeen.builder@gmail.com` (has both credentials and Google linked)
-8. **Test the brand voice test feature** to verify Claude API is working
-9. The Claude service is already built in `src/lib/ai/claude.ts` - just need to integrate with review routes
+1. **Prompt 8** is next: Sentiment Analysis improvements
+2. **ANTHROPIC_API_KEY is REQUIRED** for response generation (already configured)
+3. **DEEPSEEK_API_KEY** is optional (has keyword-based fallback)
+4. All environment variables are configured in `.env.local`
+5. AI response generation is fully functional and tested
+6. Reference `docs/phase-0/CORE_SPECS.md` for Prompt 8 specifications
+7. Prompt 8 will need:
+   - DeepSeek API integration improvements
+   - Batch sentiment analysis endpoint
+   - Sentiment quota tracking
+   - Monthly reset cron job
+8. Current user in database: `prajeen.builder@gmail.com` (has both credentials and Google linked)
+9. The Claude service is at `src/lib/ai/claude.ts` with tone modifier support
+10. The DeepSeek service is at `src/lib/ai/deepseek.ts` with fallback logic

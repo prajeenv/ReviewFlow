@@ -802,10 +802,10 @@ Implement AI-powered response generation using Claude API.
    - Return response with creditsRemaining
    
    **POST /api/reviews/[id]/regenerate** - Regenerate with different tone
-   - Check user has credits (≥0.5)
+   - Check user has credits (≥1.0)
    - Fetch existing response
    - Generate new response with tone modifier
-   - Deduct 0.5 credits
+   - Deduct 1.0 credits
    - Update ResponseText
    - Create new ResponseVersion entry
    - Log credit usage
@@ -1047,7 +1047,7 @@ Implement comprehensive credit tracking and management system.
    Show table:
    - Date/Time
    - Action (Generate Response, Regenerate)
-   - Credits Used (+1.0, +0.5)
+   - Credits Used (+1.0)
    - Review Preview (first 50 chars)
    - Running balance
    
@@ -1104,7 +1104,7 @@ Implement comprehensive credit tracking and management system.
 **Testing:**
 - Check dashboard → verify credit balance accurate
 - Generate response → verify credit deducted, balance updated
-- Regenerate → verify 0.5 credits deducted
+- Regenerate → verify 1 credit deducted
 - View usage history → verify all operations logged
 - Test race condition: Multiple rapid API calls → verify no over-deduction
 - Check CreditUsage table → verify audit trail complete

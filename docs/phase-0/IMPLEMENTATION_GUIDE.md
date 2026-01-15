@@ -93,11 +93,11 @@ Modal appears: "Select tone"
 Click "Regenerate"
   ↓
 System checks:
-- User has 0.5 credits? (YES → continue, NO → error)
+- User has 1.0 credits? (YES → continue, NO → error)
   ↓
 System:
 1. Call Claude API with new tone modifier
-2. Deduct 0.5 credits
+2. Deduct 1.0 credits
 3. Create new version
 4. Update response text
 5. Log credit usage
@@ -641,7 +641,7 @@ if (!review) {
 
 ### Credit System Testing
 1. Generate response → verify 1.0 credits deducted
-2. Regenerate → verify 0.5 credits deducted
+2. Regenerate → verify 1.0 credits deducted
 3. Try with 0 credits → verify error shown
 4. Check audit trail → verify CreditUsage logged
 5. Race condition test → rapid clicks → verify no over-deduction

@@ -29,7 +29,7 @@ Reviews added → AI generates response in same language → User edits (optiona
 
 **Credit Costs:**
 - Response generation: 1.0 credits
-- Response regeneration: 0.5 credits  
+- Response regeneration: 1.0 credits
 - Sentiment analysis: 0.3 credits (counted against sentiment quota, not credits)
 
 ---
@@ -505,7 +505,7 @@ const TIER_LIMITS = {
 // Credit costs
 const CREDIT_COSTS = {
   RESPONSE_GENERATION: 1.0,
-  RESPONSE_REGENERATION: 0.5,
+  RESPONSE_REGENERATION: 1.0,
   SENTIMENT_ANALYSIS: 0.3  // Counted against sentiment quota
 };
 

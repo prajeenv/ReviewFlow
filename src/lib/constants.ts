@@ -119,7 +119,7 @@ export const TIER_LIMITS: Record<
 // Credit costs
 export const CREDIT_COSTS = {
   GENERATE_RESPONSE: 1.0,
-  REGENERATE_RESPONSE: 0.5,
+  REGENERATE_RESPONSE: 1.0,
 } as const;
 
 // Validation limits

@@ -56,7 +56,7 @@ export function ToneModifier({
   isLoading = false,
   disabled = false,
   currentTone,
-  creditsNeeded = 0.5,
+  creditsNeeded = 1.0,
 }: ToneModifierProps) {
   const [open, setOpen] = useState(false);
   const [selectedTone, setSelectedTone] = useState<ToneOption>("professional");

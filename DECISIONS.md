@@ -376,14 +376,14 @@ externalId and externalUrl in create	Available in schema but not in create form 
 
 **API Endpoints Created:**
 - `POST /api/reviews/[id]/generate` - Generate initial response (1.0 credit)
-- `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (0.5 credits)
+- `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (1.0 credit)
 - `PUT /api/reviews/[id]/response` - Manual edit (0 credits)
 - `POST /api/reviews/[id]/publish` - Mark as approved
 - `DELETE /api/reviews/[id]/response` - Delete response and versions
 
-**Credit Costs (from CORE_SPECS):**
+**Credit Costs:**
 - Initial generation: 1.0 credits
-- Regeneration: 0.5 credits
+- Regeneration: 1.0 credits
 - Manual edit: 0 credits
 
 **Tone Modifiers:**

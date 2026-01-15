@@ -18,10 +18,10 @@ const regenerateSchema = z.object({
 /**
  * POST /api/reviews/[id]/regenerate - Regenerate response with different tone
  *
- * - Check user has credits (>= 0.5)
+ * - Check user has credits (>= 1.0)
  * - Fetch existing response
  * - Generate new response with tone modifier
- * - Deduct 0.5 credits
+ * - Deduct 1.0 credits
  * - Update ResponseText
  * - Create new ResponseVersion entry
  * - Log credit usage
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Check credits (regeneration costs 0.5)
+    // Check credits (regeneration costs 1.0)
     if (user.credits < CREDIT_COSTS.REGENERATE_RESPONSE) {
       return NextResponse.json(
         {
