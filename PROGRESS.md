@@ -389,6 +389,79 @@ dropdown-menu, sheet, skeleton, tooltip, scroll-area
 - [ ] Test all operations
 
 ---
+3. What to Test Before Considering Complete
+Authentication Flow:
+
+ Log in with existing account
+ Verify dashboard loads correctly
+Add Review:
+
+ Navigate to /dashboard/reviews/new
+ Enter review text (verify language detection appears)
+ Test with different languages (Spanish, French, etc.)
+ Select platform, add rating (1-5 stars), add reviewer name
+ Submit and verify redirect to detail page
+ Verify sentiment badge appears (positive/neutral/negative)
+Reviews List:
+
+ Navigate to /dashboard/reviews
+ Verify reviews appear in list
+ Test platform filter dropdown
+ Test sentiment filter dropdown
+ Test pagination (if you have more than 10 reviews)
+ Click on a review to go to detail page
+Review Detail:
+
+ View review with all details
+ Verify language and sentiment badges
+ Click Edit to go to edit page
+ Click Delete and confirm deletion works
+Edit Review:
+
+ Modify review text
+ Verify language re-detection occurs
+ Save and verify changes persist
+Edge Cases:
+
+ Try adding a review with text < 10 characters (should show "low confidence" language)
+ Try adding duplicate review within 5 minutes (should show error)
+ Try adding review with 2000+ characters (should show validation error)
+4. Before Moving to Next Prompt
+Environment Variables to Set (if not already):
+
+
+# Required for Prompt 6 (AI Response Generation)
+ANTHROPIC_API_KEY="sk-ant-..."
+
+# Optional for sentiment (has fallback)
+DEEPSEEK_API_KEY="sk-..."
+Verify:
+
+Database connection works (npm run db:studio to check)
+All reviews appear correctly
+User has credits remaining (check dashboard stats)
+5. What Was Completed in Prompt 5
+API Endpoints (5 total):
+
+POST /api/reviews - Create review with language detection & sentiment
+GET /api/reviews - List with pagination & filters
+GET /api/reviews/[id] - Single review with response/versions
+PUT /api/reviews/[id] - Update with language re-detection
+DELETE /api/reviews/[id] - Delete with cascade
+Services:
+
+src/lib/ai/deepseek.ts - Sentiment analysis with fallback
+UI Components:
+
+ReviewForm.tsx - Complete form with language detection
+ReviewCard.tsx - Card display with badges and actions
+ReviewList.tsx - Paginated list with filters
+Pages:
+
+/dashboard/reviews - Reviews listing
+/dashboard/reviews/new - Add new review
+/dashboard/reviews/[id] - Review detail
+/dashboard/reviews/[id]/edit - Edit review
 
 ### ⏳ Prompt 6: Brand Voice Configuration
 
@@ -404,20 +477,137 @@ dropdown-menu, sheet, skeleton, tooltip, scroll-area
 - [ ] Test brand voice persistence
 
 ---
+3. What to Test
+Login at http://localhost:3000/auth/signin
+Navigate to Settings → Brand Voice (sidebar or /dashboard/settings/brand-voice)
+Test tone selection - Click each tone option
+Test formality slider - Drag from 1 to 5
+Test key phrases - Add/remove phrases, try max 20
+Test sample responses - Add/edit/remove samples, try max 5
+Test style notes - Enter text, verify 500 char limit
+Save changes - Verify success toast and "Saved" button state
+Reset to defaults - Verify reset functionality
+Test response panel - Try sample reviews (requires ANTHROPIC_API_KEY)
+Verify API directly:
+GET /api/brand-voice - Should return brand voice
+PUT /api/brand-voice - Update settings
+POST /api/brand-voice/test - Test with sample review
+4. Before Next Prompt
+Required:
 
-### ⏳ Prompt 7: AI Response Generation
+Ensure ANTHROPIC_API_KEY is set in .env.local for the test response feature to work
+Optional:
 
-**Status:** Not Started  
+Test the brand voice test panel with different review texts and tones
+5. What Was Completed
+✅ Brand Voice API - GET /api/brand-voice
+✅ Brand Voice API - PUT /api/brand-voice
+✅ Brand Voice API - POST /api/brand-voice/test
+✅ Claude AI service (src/lib/ai/claude.ts)
+✅ ToneSelector component
+✅ FormalitySlider component (added shadcn/ui slider)
+✅ KeyPhrasesInput component
+✅ SampleResponsesInput component
+✅ TestResponsePanel component
+✅ BrandVoiceForm component
+✅ Settings overview page (/dashboard/settings)
+✅ Brand Voice settings page (/dashboard/settings/brand-voice)
+✅ Updated constants with brand voice tones and limits
+✅ Updated validations with brand voice schema
+✅ Cleaned up debug logging from auth.ts
+✅ Build passes with no errors
+
+### ✅ Prompt 7: AI Response Generation
+
+**Status:** Completed
 **Estimated Duration:** 2 days
 
 **Objectives:**
-- [ ] Integrate Claude API
-- [ ] Implement response generation endpoint
-- [ ] Create regeneration with tone options
-- [ ] Build response editor component
-- [ ] Implement credit deduction logic
-- [ ] Add version history
-- [ ] Test multi-language generation
+- [x] Integrate Claude API
+- [x] Implement response generation endpoint
+- [x] Create regeneration with tone options
+- [x] Build response editor component
+- [x] Implement credit deduction logic
+- [x] Add version history
+- [x] Test multi-language generation
+
+### 4. What to Test Before Considering Complete
+
+**Generate Response Flow:**
+1. Navigate to a review without response (`/dashboard/reviews/[id]`)
+2. Click "Generate Response" button
+3. Select tone option (Default, Professional, Friendly, Empathetic)
+4. Click "Generate Response" - verify response appears
+5. Verify 1 credit was deducted (check dashboard stats)
+6. Verify response displays correctly with RTL support for Arabic/Hebrew
+
+**Regenerate Flow:**
+1. On a review with existing response, click "Regenerate" button
+2. Select different tone in dialog
+3. Click "Regenerate" - verify new response appears
+4. Verify 0.5 credits deducted
+5. Check version history shows previous version
+
+**Edit Flow:**
+1. Click "Edit" on existing response
+2. Modify text, verify character counter works
+3. Save changes - verify no credits deducted
+4. Verify response marked as "Edited"
+5. Check version history shows edit
+
+**Publish/Approve Flow:**
+1. Click "Approve" on response
+2. Verify "Approved" badge appears
+3. Verify publishedAt timestamp set
+
+**Delete Flow:**
+1. Click "Delete" on response
+2. Confirm deletion
+3. Verify response and versions removed
+4. Verify "Generate Response" button returns
+
+**Copy Flow:**
+1. Click "Copy" button
+2. Paste in text editor
+3. Verify response text copied correctly
+
+**Version History:**
+1. Generate response, regenerate a few times
+2. Expand version history
+3. Click "Restore this version" on older version
+4. Verify response text reverts
+
+### 5. Before Moving to Next Prompt
+
+**Required:**
+- Ensure ANTHROPIC_API_KEY is set in `.env.local`
+
+**Verify:**
+- User has credits remaining (check `/dashboard` stats)
+- At least one review exists without response for testing
+
+### 6. What Was Completed in Prompt 7
+
+**API Endpoints (5 total):**
+- `POST /api/reviews/[id]/generate` - Generate initial AI response
+- `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier
+- `PUT /api/reviews/[id]/response` - Edit response manually
+- `POST /api/reviews/[id]/publish` - Mark as approved
+- `DELETE /api/reviews/[id]/response` - Delete response
+
+**UI Components (4 total):**
+- `ResponsePanel.tsx` - Main response display with all actions
+- `ResponseEditor.tsx` - Inline text editor
+- `ToneModifier.tsx` - Dialog for tone selection
+- `ResponseVersionHistory.tsx` - Collapsible version list
+
+**Pages:**
+- `/dashboard/reviews/[id]/generate` - Generate response page with tone options
+
+**Updates:**
+- Updated Claude service to support tone modifiers
+- Updated review detail page with ResponsePanel
+- Added new shadcn/ui components (Alert, RadioGroup, Collapsible)
 
 ---
 

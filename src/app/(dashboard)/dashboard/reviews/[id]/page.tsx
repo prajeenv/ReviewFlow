@@ -11,9 +11,6 @@ import {
   Clock,
   Edit,
   Trash2,
-  Sparkles,
-  CheckCircle,
-  Copy,
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getTextDirection } from "@/lib/language-detection";
+import { ResponsePanel } from "@/components/reviews/ResponsePanel";
 
 interface ReviewDetail {
   id: string;
@@ -142,15 +140,6 @@ export default function ReviewDetailPage() {
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
-    }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Copied to clipboard!");
-    } catch {
-      toast.error("Failed to copy");
     }
   };
 
@@ -306,125 +295,21 @@ export default function ReviewDetailPage() {
       </Card>
 
       {/* Response section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              AI Response
-            </CardTitle>
-            {!review.response && (
-              <Button asChild>
-                <Link href={`/dashboard/reviews/${review.id}/generate`}>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Generate Response
-                </Link>
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {review.response ? (
-            <div className="space-y-4">
-              {/* Response status badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                {review.response.isPublished && (
-                  <Badge variant="secondary">
-                    <CheckCircle className="mr-1 h-3 w-3" />
-                    Published
-                  </Badge>
-                )}
-                {review.response.isEdited && (
-                  <Badge variant="outline">Edited</Badge>
-                )}
-                <Badge variant="outline">{review.response.toneUsed} tone</Badge>
-              </div>
-
-              {/* Response text */}
-              <div className="bg-muted/50 rounded-lg p-4">
-                <p
-                  className="text-sm leading-relaxed whitespace-pre-wrap"
-                  dir={textDirection}
-                >
-                  {review.response.responseText}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard(review.response!.responseText)}
-                >
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy
-                </Button>
-                <Button variant="outline" size="sm" disabled>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Regenerate (Coming Soon)
-                </Button>
-              </div>
-
-              <Separator />
-
-              {/* Response metadata */}
-              <div className="grid gap-4 sm:grid-cols-3 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">Generated</p>
-                  <p>{formatDate(review.response.createdAt)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Credits Used</p>
-                  <p>{review.response.creditsUsed}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Model</p>
-                  <p className="truncate">{review.response.generationModel}</p>
-                </div>
-              </div>
-
-              {/* Version history */}
-              {review.response.versions.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Version History</h4>
-                    <div className="space-y-2">
-                      {review.response.versions.map((version) => (
-                        <div
-                          key={version.id}
-                          className="text-xs p-2 rounded border"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <Badge variant="outline" className="text-xs">
-                              {version.toneUsed}
-                            </Badge>
-                            <span className="text-muted-foreground">
-                              {formatDate(version.createdAt)}
-                            </span>
-                          </div>
-                          <p className="line-clamp-2" dir={textDirection}>
-                            {version.responseText}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Sparkles className="mx-auto h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">
-                No response generated yet. Click the button above to create an
-                AI-powered response.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <ResponsePanel
+        reviewId={review.id}
+        response={review.response}
+        textDirection={textDirection}
+        onResponseUpdate={() => {
+          // Refresh review data
+          fetch(`/api/reviews/${id}`)
+            .then((res) => res.json())
+            .then((result) => {
+              if (result.success) {
+                setReview(result.data.review);
+              }
+            });
+        }}
+      />
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

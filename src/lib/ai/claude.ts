@@ -6,9 +6,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 // Default model for response generation
-const DEFAULT_MODEL = "claude-sonnet-4-20250514";
+export const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 
-interface BrandVoiceConfig {
+export interface BrandVoiceConfig {
   tone: string;
   formality: number;
   keyPhrases: string[];
@@ -16,16 +16,19 @@ interface BrandVoiceConfig {
   sampleResponses: string[];
 }
 
-interface GenerateResponseParams {
+export type ToneModifier = "professional" | "friendly" | "empathetic";
+
+export interface GenerateResponseParams {
   reviewText: string;
   platform: string;
   rating?: number | null;
   detectedLanguage?: string;
   brandVoice: BrandVoiceConfig;
   isTestMode?: boolean;
+  toneModifier?: ToneModifier;
 }
 
-interface GeneratedResponse {
+export interface GeneratedResponse {
   responseText: string;
   model: string;
 }
@@ -52,6 +55,18 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Get tone modifier description for prompt
+ */
+function getToneModifierDescription(toneModifier: ToneModifier): string {
+  const descriptions: Record<ToneModifier, string> = {
+    professional: "professional and courteous, maintaining a business-appropriate tone",
+    friendly: "warm and personable, like helping a friend",
+    empathetic: "understanding and compassionate, showing genuine care for the customer's experience",
+  };
+  return descriptions[toneModifier];
+}
+
+/**
  * Generate a response to a review using Claude AI
  */
 export async function generateReviewResponse(
@@ -64,6 +79,7 @@ export async function generateReviewResponse(
     detectedLanguage = "English",
     brandVoice,
     isTestMode = false,
+    toneModifier,
   } = params;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -75,7 +91,7 @@ export async function generateReviewResponse(
   const client = new Anthropic({ apiKey });
 
   // Build the system prompt with brand voice configuration
-  const systemPrompt = buildSystemPrompt(brandVoice, detectedLanguage);
+  const systemPrompt = buildSystemPrompt(brandVoice, detectedLanguage, toneModifier);
 
   // Build the user prompt with review details
   const userPrompt = buildUserPrompt({
@@ -143,7 +159,8 @@ export async function generateReviewResponse(
  */
 function buildSystemPrompt(
   brandVoice: BrandVoiceConfig,
-  language: string
+  language: string,
+  toneModifier?: ToneModifier
 ): string {
   const { tone, formality, keyPhrases, styleNotes, sampleResponses } =
     brandVoice;
@@ -160,6 +177,11 @@ IMPORTANT INSTRUCTIONS:
 BRAND VOICE CONFIGURATION:
 - Tone: ${tone}
 - Formality Level: ${getFormalityDescription(formality)}`;
+
+  // Add tone modifier if specified (for regeneration with different tone)
+  if (toneModifier) {
+    prompt += `\n- IMPORTANT Tone Override: Be ${getToneModifierDescription(toneModifier)}`;
+  }
 
   if (keyPhrases.length > 0) {
     prompt += `\n- REQUIRED Key Phrases (you MUST incorporate at least 1-2 of these naturally): ${keyPhrases.join(", ")}`;

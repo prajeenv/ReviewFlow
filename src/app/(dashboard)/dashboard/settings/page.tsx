@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, User, CreditCard, Bell, ChevronRight } from "lucide-react";
 
 const settingsSections = [
@@ -100,28 +99,6 @@ export default function SettingsPage() {
           );
         })}
       </div>
-
-      {/* Quick access to Brand Voice */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-8 w-8 text-primary" />
-              <div>
-                <h3 className="font-semibold">Configure Your Brand Voice</h3>
-                <p className="text-sm text-muted-foreground">
-                  Set up your tone, key phrases, and style guidelines
-                </p>
-              </div>
-            </div>
-            <Button asChild>
-              <Link href="/dashboard/settings/brand-voice">
-                Get Started
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

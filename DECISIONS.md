@@ -347,14 +347,55 @@ externalId and externalUrl in create	Available in schema but not in create form 
 
 ## Prompt 7: AI Response Generation
 
-*Decisions to be added after completing Prompt 7*
+### 1. Technical Decisions Made
 
-**Potential Decisions:**
-- Claude API model version (claude-sonnet-4-20250514 per spec)
-- Token limits (200 max tokens per spec)
-- Retry strategy for API failures
-- Streaming vs single response
-- Cache strategy for brand voice prompts
+| Decision | Reason |
+|----------|--------|
+| Used existing Claude service from Prompt 6 | Reused the generateReviewResponse function, adding toneModifier parameter for regeneration |
+| Tone modifier as optional parameter | Default behavior uses brand voice tone; modifier overrides for regeneration |
+| Non-streaming API calls | Simpler implementation; responses are short (<500 chars); streaming adds complexity without significant UX benefit |
+| Response truncation with sentence boundary | If AI generates >500 chars, truncates at last period after char 400 to avoid mid-sentence cuts |
+| Atomic credit deduction in transaction | Uses existing deductCreditsAtomic from db-utils; prevents race conditions |
+| Version history on every change | Creates ResponseVersion entry for generate, regenerate, and manual edits |
+| 0 credits for manual edits | Edits don't consume credits since they don't use AI |
+| ResponsePanel component approach | Single component manages all response actions (view, edit, regenerate, copy, delete) |
+| In-place editing | Edit mode replaces response display with textarea rather than modal |
+| ToneModifier as dialog | Prevents accidental regeneration; shows credit cost; allows tone selection |
+| Collapsible version history | Reduces visual clutter; expands on demand |
+
+### 2. Deviations from Phase 0 Specifications
+
+| Spec | Implementation | Why | Risk |
+|------|----------------|-----|------|
+| Spec said 200 max tokens | Using 500 max tokens | 500 chars for response text limit requires more tokens; 200 tokens ~150 words would be too limiting | Low - costs slightly more but better output |
+| Spec mentioned separate generate page | Generate page exists AND ResponsePanel inline | Both options available - page for initial generation, panel for subsequent actions | None - more flexible |
+| Spec mentioned version restore | Added restore version functionality | Useful feature for users who want to undo regeneration | None - enhancement |
+| Publishing marks "approved" not "published externally" | isPublished = true marks as approved/ready to copy | True external publishing requires platform integrations (Phase 3) | Low - terminology clarified in UI |
+
+### 3. Key Implementation Details
+
+**API Endpoints Created:**
+- `POST /api/reviews/[id]/generate` - Generate initial response (1.0 credit)
+- `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (0.5 credits)
+- `PUT /api/reviews/[id]/response` - Manual edit (0 credits)
+- `POST /api/reviews/[id]/publish` - Mark as approved
+- `DELETE /api/reviews/[id]/response` - Delete response and versions
+
+**Credit Costs (from CORE_SPECS):**
+- Initial generation: 1.0 credits
+- Regeneration: 0.5 credits
+- Manual edit: 0 credits
+
+**Tone Modifiers:**
+- `professional` - Business-like, courteous, maintaining formal tone
+- `friendly` - Warm, personable, like helping a friend
+- `empathetic` - Understanding, compassionate, showing genuine care
+
+**UI Components Created:**
+- `ResponsePanel` - Main response display with all actions
+- `ResponseEditor` - Inline text editor with char counter
+- `ToneModifier` - Dialog for selecting regeneration tone
+- `ResponseVersionHistory` - Collapsible version list
 
 ---
 
