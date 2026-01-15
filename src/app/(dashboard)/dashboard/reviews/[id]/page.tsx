@@ -27,6 +27,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getTextDirection } from "@/lib/language-detection";
 import { ResponsePanel } from "@/components/reviews/ResponsePanel";
 import { useCredits } from "@/components/providers/CreditsProvider";
@@ -257,23 +263,32 @@ export default function ReviewDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               {!review.response && (
-                <Button
-                  size="sm"
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Generate Response
-                    </>
-                  )}
-                </Button>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        onClick={handleGenerate}
+                        disabled={isGenerating}
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Generate Response
+                          </>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Uses {CREDIT_COSTS.GENERATE_RESPONSE} credit</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/dashboard/reviews/${review.id}/edit`}>
@@ -330,22 +345,24 @@ export default function ReviewDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Response section */}
-      <ResponsePanel
-        reviewId={review.id}
-        response={review.response}
-        textDirection={textDirection}
-        onResponseUpdate={() => {
-          // Refresh review data
-          fetch(`/api/reviews/${id}`)
-            .then((res) => res.json())
-            .then((result) => {
-              if (result.success) {
-                setReview(result.data.review);
-              }
-            });
-        }}
-      />
+      {/* Response section - only show when response exists */}
+      {review.response && (
+        <ResponsePanel
+          reviewId={review.id}
+          response={review.response}
+          textDirection={textDirection}
+          onResponseUpdate={() => {
+            // Refresh review data
+            fetch(`/api/reviews/${id}`)
+              .then((res) => res.json())
+              .then((result) => {
+                if (result.success) {
+                  setReview(result.data.review);
+                }
+              });
+          }}
+        />
+      )}
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
