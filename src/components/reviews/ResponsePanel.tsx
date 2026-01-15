@@ -23,6 +23,7 @@ import {
   Copy,
   CheckCircle,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { ResponseEditor } from "./ResponseEditor";
 import { ToneModifier } from "./ToneModifier";
@@ -265,6 +266,52 @@ export function ResponsePanel({
     }
   };
 
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        setLocalResponse({
+          id: result.data.response.id,
+          responseText: result.data.response.responseText,
+          toneUsed: result.data.response.toneUsed,
+          creditsUsed: result.data.response.creditsUsed,
+          isEdited: false,
+          editedAt: null,
+          generationModel: result.data.response.generationModel,
+          isPublished: false,
+          publishedAt: null,
+          createdAt: result.data.response.createdAt,
+          versions: [],
+        });
+        toast.success("Response generated successfully!");
+        refreshCredits();
+        onResponseUpdate?.();
+      } else {
+        if (result.error?.code === "INSUFFICIENT_CREDITS") {
+          toast.error(
+            `Not enough credits. You have ${result.error.details?.creditsAvailable || 0} credits remaining.`
+          );
+        } else if (result.error?.code === "AI_SERVICE_UNAVAILABLE") {
+          toast.error("AI service is temporarily unavailable. Please try again.");
+        } else {
+          toast.error(result.error?.message || "Failed to generate response");
+        }
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Empty state - no response
   if (!localResponse) {
     return (
@@ -281,11 +328,22 @@ export function ResponsePanel({
             <p className="mt-4 text-muted-foreground">
               No response generated yet.
             </p>
-            <Button asChild className="mt-4">
-              <a href={`/dashboard/reviews/${reviewId}/generate`}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Response
-              </a>
+            <Button
+              className="mt-4"
+              onClick={handleGenerate}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate Response
+                </>
+              )}
             </Button>
           </div>
         </CardContent>
