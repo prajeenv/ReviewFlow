@@ -14,10 +14,9 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -182,24 +181,35 @@ export default function ReviewDetailPage() {
 
       {/* Review card */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{review.platform}</Badge>
-                {review.sentiment && (
-                  <Badge className={getSentimentColor(review.sentiment)}>
-                    {review.sentiment}
-                  </Badge>
-                )}
-                {review.detectedLanguage !== "English" && (
-                  <Badge variant="outline">
-                    <Globe className="mr-1 h-3 w-3" />
-                    {review.detectedLanguage}
-                  </Badge>
-                )}
-              </div>
-              <CardTitle className="text-xl">Review Details</CardTitle>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{review.platform}</Badge>
+              {review.rating && (
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < review.rating!
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+              {review.sentiment && (
+                <Badge className={getSentimentColor(review.sentiment)}>
+                  {review.sentiment}
+                </Badge>
+              )}
+              {review.detectedLanguage !== "English" && (
+                <Badge variant="outline">
+                  <Globe className="mr-1 h-3 w-3" />
+                  {review.detectedLanguage}
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" asChild>
@@ -220,75 +230,38 @@ export default function ReviewDetailPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Rating */}
-          {review.rating && (
-            <div className="flex items-center gap-2">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-5 w-5 ${
-                    i < review.rating!
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-muted-foreground"
-                  }`}
-                />
-              ))}
-              <span className="text-sm text-muted-foreground">
-                ({review.rating}/5)
-              </span>
-            </div>
-          )}
-
+        <CardContent className="space-y-4">
           {/* Review text */}
-          <div className="space-y-2">
-            <h3 className="font-medium">Review</h3>
-            <p
-              className="text-sm leading-relaxed whitespace-pre-wrap"
-              dir={textDirection}
-            >
-              {review.reviewText}
-            </p>
-          </div>
+          <p
+            className="text-sm leading-relaxed whitespace-pre-wrap"
+            dir={textDirection}
+          >
+            {review.reviewText}
+          </p>
 
-          {/* Reviewer info */}
-          {review.reviewerName && (
-            <p className="text-sm text-muted-foreground">
-              - {review.reviewerName}
-            </p>
-          )}
-
-          <Separator />
-
-          {/* Metadata */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Added</p>
-              <p className="text-sm flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {formatDate(review.createdAt)}
-              </p>
-            </div>
+          {/* Reviewer and metadata inline */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            {review.reviewerName && (
+              <span>By {review.reviewerName}</span>
+            )}
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Added {new Date(review.createdAt).toLocaleDateString()}
+            </span>
             {review.reviewDate && (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Review Date</p>
-                <p className="text-sm">
-                  {new Date(review.reviewDate).toLocaleDateString()}
-                </p>
-              </div>
+              <span>
+                Review Date {new Date(review.reviewDate).toLocaleDateString()}
+              </span>
             )}
             {review.externalUrl && (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">External Link</p>
-                <a
-                  href={review.externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  View original <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
+              <a
+                href={review.externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline flex items-center gap-1"
+              >
+                View original <ExternalLink className="h-3 w-3" />
+              </a>
             )}
           </div>
         </CardContent>
