@@ -28,6 +28,7 @@ import { ResponseEditor } from "./ResponseEditor";
 import { ToneModifier } from "./ToneModifier";
 import { ResponseVersionHistory } from "./ResponseVersionHistory";
 import { CREDIT_COSTS } from "@/lib/constants";
+import { useCredits } from "@/components/providers/CreditsProvider";
 
 interface ResponseVersion {
   id: string;
@@ -73,6 +74,7 @@ export function ResponsePanel({
   textDirection = "ltr",
   onResponseUpdate,
 }: ResponsePanelProps) {
+  const { refreshCredits } = useCredits();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -162,6 +164,7 @@ export function ResponsePanel({
             : null
         );
         toast.success(`Response regenerated with ${tone} tone!`);
+        refreshCredits();
         onResponseUpdate?.();
       } else {
         toast.error(result.error?.message || "Failed to regenerate response");

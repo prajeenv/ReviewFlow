@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getTextDirection } from "@/lib/language-detection";
 import { CREDIT_COSTS } from "@/lib/constants";
+import { useCredits } from "@/components/providers/CreditsProvider";
 
 interface Review {
   id: string;
@@ -81,6 +82,7 @@ export default function GenerateResponsePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedResponse, setGeneratedResponse] = useState<GeneratedResponse | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
+  const { refreshCredits } = useCredits();
   const [error, setError] = useState<string | null>(null);
 
   // Fetch review
@@ -138,6 +140,7 @@ export default function GenerateResponsePage() {
         setGeneratedResponse(result.data.response);
         setCreditsRemaining(result.data.creditsRemaining);
         toast.success("Response generated successfully!");
+        refreshCredits();
       } else {
         if (result.error?.code === "INSUFFICIENT_CREDITS") {
           setError(

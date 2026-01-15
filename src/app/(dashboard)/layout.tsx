@@ -6,21 +6,14 @@ import { useRouter } from "next/navigation";
 import { Sidebar, DashboardHeader } from "@/components/dashboard";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { LoadingPage } from "@/components/shared";
+import { CreditsProvider, useCredits } from "@/components/providers/CreditsProvider";
 
-interface DashboardData {
-  credits: number;
-  tier: string;
-}
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { data: session, status } = useSession();
+function DashboardContent({ children }: { children: React.ReactNode }) {
+  const { status } = useSession();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const { credits, tier, refreshCredits } = useCredits();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -29,28 +22,12 @@ export default function DashboardLayout({
     }
   }, [status, router]);
 
-  // Fetch dashboard data (credits, tier)
+  // Fetch dashboard data (credits, tier) on mount
   useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/dashboard/stats")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setDashboardData({
-              credits: data.data.credits.remaining,
-              tier: data.data.tier,
-            });
-          }
-        })
-        .catch(() => {
-          // Use session data as fallback
-          setDashboardData({
-            credits: 0,
-            tier: session?.user?.tier || "FREE",
-          });
-        });
+    if (status === "authenticated" && !isInitialized) {
+      refreshCredits().then(() => setIsInitialized(true));
     }
-  }, [status, session]);
+  }, [status, isInitialized, refreshCredits]);
 
   // Show loading while checking auth
   if (status === "loading") {
@@ -87,13 +64,25 @@ export default function DashboardLayout({
         {/* Header */}
         <DashboardHeader
           onMenuClick={() => setIsMobileMenuOpen(true)}
-          credits={dashboardData?.credits ?? 0}
-          tier={dashboardData?.tier ?? "FREE"}
+          credits={credits}
+          tier={tier}
         />
 
         {/* Page content */}
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <CreditsProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </CreditsProvider>
   );
 }
