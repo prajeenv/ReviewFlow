@@ -12,6 +12,8 @@ import {
   Edit,
   Trash2,
   ExternalLink,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -27,6 +29,8 @@ import {
 } from "@/components/ui/dialog";
 import { getTextDirection } from "@/lib/language-detection";
 import { ResponsePanel } from "@/components/reviews/ResponsePanel";
+import { useCredits } from "@/components/providers/CreditsProvider";
+import { CREDIT_COSTS } from "@/lib/constants";
 
 interface ReviewDetail {
   id: string;
@@ -94,6 +98,8 @@ export default function ReviewDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { refreshCredits } = useCredits();
 
   useEffect(() => {
     async function fetchReview() {
@@ -139,6 +145,44 @@ export default function ReviewDetailPage() {
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const res = await fetch(`/api/reviews/${id}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        // Refresh the review data to get the new response
+        const reviewRes = await fetch(`/api/reviews/${id}`);
+        const reviewResult = await reviewRes.json();
+        if (reviewResult.success) {
+          setReview(reviewResult.data.review);
+        }
+        toast.success("Response generated successfully!");
+        refreshCredits();
+      } else {
+        if (result.error?.code === "INSUFFICIENT_CREDITS") {
+          toast.error(
+            `Not enough credits. You have ${result.error.details?.creditsAvailable || 0} credits remaining.`
+          );
+        } else if (result.error?.code === "AI_SERVICE_UNAVAILABLE") {
+          toast.error("AI service is temporarily unavailable. Please try again.");
+        } else {
+          toast.error(result.error?.message || "Failed to generate response");
+        }
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -212,6 +256,25 @@ export default function ReviewDetailPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {!review.response && (
+                <Button
+                  size="sm"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate Response
+                    </>
+                  )}
+                </Button>
+              )}
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/dashboard/reviews/${review.id}/edit`}>
                   <Edit className="mr-2 h-4 w-4" />
