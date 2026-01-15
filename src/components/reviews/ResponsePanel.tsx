@@ -345,6 +345,9 @@ export function ResponsePanel({
                 </>
               )}
             </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Uses {CREDIT_COSTS.GENERATE_RESPONSE} credit
+            </p>
           </div>
         </CardContent>
       </Card>
