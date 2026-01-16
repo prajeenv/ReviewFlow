@@ -380,7 +380,7 @@ externalId and externalUrl in create	Available in schema but not in create form 
 **API Endpoints Created:**
 - `POST /api/reviews/[id]/generate` - Generate initial response (1.0 credit, NO version entry)
 - `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (1.0 credit, saves old text to history first)
-- `PUT /api/reviews/[id]/response` - Manual edit or restore version (0 credits)
+- `PUT /api/reviews/[id]/response` - Manual edit (0 credits)
 - `POST /api/reviews/[id]/publish` - Mark as approved
 - `DELETE /api/reviews/[id]/response` - Delete response and versions
 
@@ -388,14 +388,12 @@ externalId and externalUrl in create	Available in schema but not in create form 
 - Initial generation: 1.0 credits
 - Regeneration: 1.0 credits
 - Manual edit: 0 credits
-- Restore version: 0 credits
 
 **Version History Behavior:**
-Version history only stores PREVIOUS versions (what the response used to be), not the current response.
+Version history stores PREVIOUS versions (what the response used to be) for reference only. No restore functionality.
 - **Generate**: Creates response only. NO version entry. Sets `ReviewResponse.creditsUsed = 1`
 - **Regenerate**: Saves OLD text to history (preserving its creditsUsed), then updates response. Sets `ReviewResponse.creditsUsed = 1`
 - **Manual Edit**: Saves OLD text to history (preserving its creditsUsed), then updates response. Sets `ReviewResponse.creditsUsed = 0`
-- **Restore**: Updates response to restored text/tone WITHOUT creating new version (version already exists in history)
 
 **Version History Credit Display:**
 The `creditsUsed` field tracks whether a version was AI-generated (1) or manually edited (0):

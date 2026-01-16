@@ -22,7 +22,6 @@ interface Version {
 interface ResponseVersionHistoryProps {
   versions: Version[];
   textDirection?: "ltr" | "rtl";
-  onRestoreVersion?: (version: Version) => void;
 }
 
 function formatDate(dateString: string) {
@@ -37,7 +36,6 @@ function formatDate(dateString: string) {
 export function ResponseVersionHistory({
   versions,
   textDirection = "ltr",
-  onRestoreVersion,
 }: ResponseVersionHistoryProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
@@ -118,30 +116,18 @@ export function ResponseVersionHistory({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2">
-                {version.responseText.length > 150 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() =>
-                      setExpandedVersionId(isExpanded ? null : version.id)
-                    }
-                  >
-                    {isExpanded ? "Show less" : "Show more"}
-                  </Button>
-                )}
-                {onRestoreVersion && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs ml-auto"
-                    onClick={() => onRestoreVersion(version)}
-                  >
-                    Restore this version
-                  </Button>
-                )}
-              </div>
+              {version.responseText.length > 150 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() =>
+                    setExpandedVersionId(isExpanded ? null : version.id)
+                  }
+                >
+                  {isExpanded ? "Show less" : "Show more"}
+                </Button>
+              )}
             </div>
           );
         })}

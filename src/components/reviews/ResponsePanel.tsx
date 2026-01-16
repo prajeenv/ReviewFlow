@@ -224,45 +224,6 @@ export function ResponsePanel({
     }
   };
 
-  const handleRestoreVersion = async (version: ResponseVersion) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/reviews/${reviewId}/response`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          responseText: version.responseText,
-          toneUsed: version.toneUsed,
-          isRestore: true, // Don't create duplicate version entry
-        }),
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        setLocalResponse((prev) =>
-          prev
-            ? {
-                ...prev,
-                responseText: result.data.response.responseText,
-                toneUsed: result.data.response.toneUsed,
-                isEdited: result.data.response.isEdited,
-                editedAt: result.data.response.editedAt,
-              }
-            : null
-        );
-        toast.success("Version restored!");
-        onResponseUpdate?.();
-      } else {
-        toast.error(result.error?.message || "Failed to restore version");
-      }
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleGenerate = async () => {
     setIsLoading(true);
     try {
@@ -474,7 +435,6 @@ export function ResponsePanel({
             <ResponseVersionHistory
               versions={localResponse.versions}
               textDirection={textDirection}
-              onRestoreVersion={handleRestoreVersion}
             />
           </>
         )}

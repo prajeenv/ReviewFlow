@@ -13,23 +13,15 @@ const updateResponseSchema = z.object({
     .string()
     .min(1, "Response text is required")
     .max(VALIDATION_LIMITS.RESPONSE_TEXT_MAX, `Response must be under ${VALIDATION_LIMITS.RESPONSE_TEXT_MAX} characters`),
-  toneUsed: z.string().optional(), // Optional: provided when restoring a version
-  isRestore: z.boolean().optional(), // If true, this is a restore (not a manual edit)
 });
 
 /**
- * PUT /api/reviews/[id]/response - Edit response manually or restore a version
+ * PUT /api/reviews/[id]/response - Edit response manually
  *
- * For manual edits:
- * - Save current text to version history (so it can be restored later)
+ * - Save current text to version history (so it can be viewed later)
  * - Update responseText with new text
  * - Set isEdited = true, editedAt = now
- * - No credit deduction (creditsUsed = 0 for edit versions)
- *
- * For restores (isRestore = true):
- * - Update responseText and toneUsed from the restored version
- * - No version entry created (version already exists in history)
- * - Preserve isEdited and editedAt state
+ * - No credit deduction (creditsUsed = 0 for edits)
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
@@ -65,7 +57,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { responseText, toneUsed, isRestore } = validationResult.data;
+    const { responseText } = validationResult.data;
 
     // Get review with response
     const review = await prisma.review.findFirst({
@@ -101,26 +93,20 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Determine the tone to use (provided tone for restores, or keep current for edits)
-    const newToneUsed = toneUsed || review.response!.toneUsed;
-
-    // For manual edits (not restores), save the current state to version history first
-    // This preserves the pre-edit text so user can restore it later
+    // Save current state to version history first, then update
     // No credits charged for manual edits
     const updatedResponse = await prisma.$transaction(async (tx) => {
-      // Only create version entry for edits, not restores
-      // Also skip if the text hasn't actually changed
-      if (!isRestore && responseText !== review.response!.responseText) {
+      // Skip if the text hasn't actually changed
+      if (responseText !== review.response!.responseText) {
         // Save the current (pre-edit) text to version history
-        // This allows the user to restore to this version later
         // Preserve the creditsUsed and isEdited of the current response
         await tx.responseVersion.create({
           data: {
             reviewResponseId: review.response!.id,
-            responseText: review.response!.responseText, // Save CURRENT text before overwriting
+            responseText: review.response!.responseText,
             toneUsed: review.response!.toneUsed,
-            creditsUsed: review.response!.creditsUsed, // Preserve what this version cost
-            isEdited: review.response!.isEdited, // Preserve edited status for history
+            creditsUsed: review.response!.creditsUsed,
+            isEdited: review.response!.isEdited,
           },
         });
       }
@@ -130,13 +116,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         where: { id: review.response!.id },
         data: {
           responseText,
-          toneUsed: newToneUsed,
-          isEdited: !isRestore, // Not edited if just restoring a previous version
-          editedAt: isRestore ? review.response!.editedAt : new Date(),
-          // For manual edits, set creditsUsed to 0 so if this version goes to history
-          // later (via regenerate), it correctly shows as 0 credits
-          // For restores, preserve the original creditsUsed from the restored version
-          creditsUsed: isRestore ? review.response!.creditsUsed : 0,
+          isEdited: true,
+          editedAt: new Date(),
+          creditsUsed: 0,
         },
       });
 
