@@ -361,18 +361,29 @@ export function ResponsePanel({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Status badges */}
-        <div className="flex flex-wrap items-center gap-2">
-          {localResponse.isPublished && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-              <CheckCircle className="mr-1 h-3 w-3" />
-              Approved
-            </Badge>
-          )}
-          {localResponse.isEdited && (
-            <Badge variant="outline">Edited</Badge>
-          )}
-          <Badge variant="outline">{localResponse.toneUsed} tone</Badge>
+        {/* Status badges and metadata */}
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            {localResponse.isPublished && (
+              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                <CheckCircle className="mr-1 h-3 w-3" />
+                Approved
+              </Badge>
+            )}
+            {localResponse.isEdited && (
+              <Badge variant="outline">Edited</Badge>
+            )}
+            <Badge variant="outline">{localResponse.toneUsed} tone</Badge>
+            {localResponse.creditsUsed > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {localResponse.creditsUsed} credit{localResponse.creditsUsed !== 1 ? "s" : ""}
+              </Badge>
+            )}
+          </div>
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {formatDate(localResponse.createdAt)}
+          </span>
         </div>
 
         {/* Response content or editor */}
@@ -445,27 +456,6 @@ export function ResponsePanel({
             </div>
           </>
         )}
-
-        <Separator />
-
-        {/* Metadata */}
-        <div className="grid gap-4 sm:grid-cols-3 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Generated</p>
-            <p className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {formatDate(localResponse.createdAt)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Credits Used</p>
-            <p>{localResponse.creditsUsed}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Model</p>
-            <p className="truncate">{localResponse.generationModel}</p>
-          </div>
-        </div>
 
         {/* Version history */}
         {localResponse.versions.length > 0 && (
