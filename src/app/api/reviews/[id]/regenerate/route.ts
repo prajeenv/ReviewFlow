@@ -229,6 +229,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           responseText: review.response!.responseText, // Save OLD text before overwriting
           toneUsed: review.response!.toneUsed,
           creditsUsed: review.response!.creditsUsed, // Credits used for the old generation
+          isEdited: review.response!.isEdited, // Preserve edited status for history
         },
       });
 

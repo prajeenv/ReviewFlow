@@ -87,6 +87,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   responseText: v.responseText,
                   toneUsed: v.toneUsed,
                   creditsUsed: v.creditsUsed,
+                  isEdited: v.isEdited,
                   createdAt: v.createdAt.toISOString(),
                 })),
               }

@@ -36,6 +36,7 @@ interface ResponseVersion {
   responseText: string;
   toneUsed: string;
   creditsUsed: number;
+  isEdited: boolean;
   createdAt: string;
 }
 
@@ -368,6 +369,12 @@ export function ResponsePanel({
               <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                 <CheckCircle className="mr-1 h-3 w-3" />
                 Approved
+              </Badge>
+            )}
+            {!localResponse.isEdited && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                <Sparkles className="mr-1 h-3 w-3" />
+                Generated
               </Badge>
             )}
             {localResponse.isEdited && (
