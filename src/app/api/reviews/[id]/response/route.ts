@@ -113,12 +113,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       if (!isRestore && responseText !== review.response!.responseText) {
         // Save the current (pre-edit) text to version history
         // This allows the user to restore to this version later
+        // Preserve the creditsUsed of the current response (1 if generated/regenerated, 0 if edited)
         await tx.responseVersion.create({
           data: {
             reviewResponseId: review.response!.id,
             responseText: review.response!.responseText, // Save CURRENT text before overwriting
             toneUsed: review.response!.toneUsed,
-            creditsUsed: 0, // No credits for manual edits
+            creditsUsed: review.response!.creditsUsed, // Preserve what this version cost
           },
         });
       }
@@ -131,6 +132,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           toneUsed: newToneUsed,
           isEdited: !isRestore, // Not edited if just restoring a previous version
           editedAt: isRestore ? review.response!.editedAt : new Date(),
+          // For manual edits, set creditsUsed to 0 so if this version goes to history
+          // later (via regenerate), it correctly shows as 0 credits
+          // For restores, preserve the original creditsUsed from the restored version
+          creditsUsed: isRestore ? review.response!.creditsUsed : 0,
         },
       });
 

@@ -392,11 +392,23 @@ externalId and externalUrl in create	Available in schema but not in create form 
 
 **Version History Behavior:**
 Version history only stores PREVIOUS versions (what the response used to be), not the current response.
-- **Generate**: Creates response only. NO version entry (current text IS the live response)
-- **Regenerate**: Saves OLD (pre-regenerate) text to history, then updates response with new text (1.0 credit)
-- **Manual Edit**: Saves OLD (pre-edit) text to history, then updates response with new text (0 credits)
+- **Generate**: Creates response only. NO version entry. Sets `ReviewResponse.creditsUsed = 1`
+- **Regenerate**: Saves OLD text to history (preserving its creditsUsed), then updates response. Sets `ReviewResponse.creditsUsed = 1`
+- **Manual Edit**: Saves OLD text to history (preserving its creditsUsed), then updates response. Sets `ReviewResponse.creditsUsed = 0`
 - **Restore**: Updates response to restored text/tone WITHOUT creating new version (version already exists in history)
-- History only shows versions different from current text (filtered in UI)
+
+**Version History Credit Display:**
+The `creditsUsed` field tracks whether a version was AI-generated (1) or manually edited (0):
+- When saving to history, we preserve `review.response.creditsUsed` (what the current response cost)
+- After a manual edit, we set `ReviewResponse.creditsUsed = 0` so future history entries show 0 credits
+- After generate/regenerate, `ReviewResponse.creditsUsed = 1` so future history entries show 1 credit
+
+Example flow:
+1. Generate (1 credit) → v1, `creditsUsed=1`
+2. Edit → saves v1 to history with `creditsUsed=1`, response becomes `creditsUsed=0`. History: {v1(1 credit)}
+3. Edit → saves v2 to history with `creditsUsed=0`, response stays `creditsUsed=0`. History: {v2, v1(1 credit)}
+4. Regenerate (1 credit) → saves v3 to history with `creditsUsed=0`, response becomes `creditsUsed=1`. History: {v3, v2, v1(1 credit)}
+5. Edit → saves v4 to history with `creditsUsed=1`, response becomes `creditsUsed=0`. History: {v4(1 credit), v3, v2, v1(1 credit)}
 
 **Tone Modifiers:**
 - `professional` - Business-like, courteous, maintaining formal tone
