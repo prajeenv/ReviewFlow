@@ -403,20 +403,23 @@ The `creditsUsed` field tracks whether a version was AI-generated (1) or manuall
 - After a manual edit, we set `ReviewResponse.creditsUsed = 0` so future history entries show 0 credits
 - After generate/regenerate, `ReviewResponse.creditsUsed = 1` so future history entries show 1 credit
 
-**Generated Badge Display:**
+**Generated vs Edited Badge Display:**
 The `isEdited` field tracks whether a response/version was AI-generated (false) or manually edited (true):
 - When saving to history, we preserve `review.response.isEdited` (whether the current response was edited)
 - After a manual edit, we set `ReviewResponse.isEdited = true`
 - After generate/regenerate, `ReviewResponse.isEdited = false`
-- UI shows "Generated" badge (blue, with Sparkles icon) when `isEdited = false`
-- UI shows "Edited" badge (outline) when `isEdited = true`
+
+**Badge display rules:**
+- **Generated response** (`isEdited = false`): Shows "Generated" badge (blue, Sparkles icon) + tone + credit
+- **Edited response** (`isEdited = true`): Shows ONLY "Edited" badge (no tone, no credit, no Generated)
+  - Rationale: We don't know what changes the user made, so tone/credit info is not meaningful
 
 Example flow:
-1. Generate (1 credit) → v1, `creditsUsed=1`, `isEdited=false` → shows "Generated" badge
-2. Edit → saves v1 to history with `creditsUsed=1`, `isEdited=false`, response becomes `creditsUsed=0`, `isEdited=true`. History: {v1(1 credit, Generated)}
-3. Edit → saves v2 to history with `creditsUsed=0`, `isEdited=true`, response stays `creditsUsed=0`, `isEdited=true`. History: {v2(Edited), v1(1 credit, Generated)}
-4. Regenerate (1 credit) → saves v3 to history with `creditsUsed=0`, `isEdited=true`, response becomes `creditsUsed=1`, `isEdited=false`. History: {v3(Edited), v2(Edited), v1(1 credit, Generated)}
-5. Edit → saves v4 to history with `creditsUsed=1`, `isEdited=false`, response becomes `creditsUsed=0`, `isEdited=true`. History: {v4(1 credit, Generated), v3(Edited), v2(Edited), v1(1 credit, Generated)}
+1. Generate (1 credit) → v1, `creditsUsed=1`, `isEdited=false` → shows "Generated | professional | 1 credit"
+2. Edit → saves v1 to history, response becomes `isEdited=true`. History: {v1(Generated | professional | 1 credit)}. Current shows: "Edited"
+3. Edit → saves v2 to history, response stays `isEdited=true`. History: {v2(Edited), v1(Generated | professional | 1 credit)}. Current shows: "Edited"
+4. Regenerate (1 credit) → saves v3 to history, response becomes `isEdited=false`. History: {v3(Edited), v2(Edited), v1(Generated | professional | 1 credit)}. Current shows: "Generated | friendly | 1 credit"
+5. Edit → saves v4 to history, response becomes `isEdited=true`. History: {v4(Generated | friendly | 1 credit), v3(Edited), v2(Edited), v1(Generated | professional | 1 credit)}. Current shows: "Edited"
 
 **Tone Modifiers:**
 - `professional` - Business-like, courteous, maintaining formal tone

@@ -82,19 +82,25 @@ export function ResponseVersionHistory({
               {/* Header */}
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  {!version.isEdited && (
-                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                      <Sparkles className="mr-1 h-3 w-3" />
-                      Generated
-                    </Badge>
-                  )}
-                  <Badge variant="outline" className="text-xs">
-                    {version.toneUsed}
-                  </Badge>
-                  {version.creditsUsed > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {version.creditsUsed} credit{version.creditsUsed !== 1 ? "s" : ""}
-                    </Badge>
+                  {version.isEdited ? (
+                    /* Edited version: only show Edited badge */
+                    <Badge variant="outline" className="text-xs">Edited</Badge>
+                  ) : (
+                    /* Generated version: show Generated badge, tone, and credit */
+                    <>
+                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <Sparkles className="mr-1 h-3 w-3" />
+                        Generated
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {version.toneUsed}
+                      </Badge>
+                      {version.creditsUsed > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {version.creditsUsed} credit{version.creditsUsed !== 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                    </>
                   )}
                 </div>
                 <span className="text-xs text-muted-foreground flex items-center gap-1">

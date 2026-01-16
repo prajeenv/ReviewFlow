@@ -371,20 +371,23 @@ export function ResponsePanel({
                 Approved
               </Badge>
             )}
-            {!localResponse.isEdited && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                <Sparkles className="mr-1 h-3 w-3" />
-                Generated
-              </Badge>
-            )}
-            {localResponse.isEdited && (
+            {localResponse.isEdited ? (
+              /* Edited response: only show Edited badge (no tone, no credit, no Generated) */
               <Badge variant="outline">Edited</Badge>
-            )}
-            <Badge variant="outline">{localResponse.toneUsed} tone</Badge>
-            {localResponse.creditsUsed > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {localResponse.creditsUsed} credit{localResponse.creditsUsed !== 1 ? "s" : ""}
-              </Badge>
+            ) : (
+              /* Generated response: show Generated badge, tone, and credit */
+              <>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  <Sparkles className="mr-1 h-3 w-3" />
+                  Generated
+                </Badge>
+                <Badge variant="outline">{localResponse.toneUsed} tone</Badge>
+                {localResponse.creditsUsed > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {localResponse.creditsUsed} credit{localResponse.creditsUsed !== 1 ? "s" : ""}
+                  </Badge>
+                )}
+              </>
             )}
           </div>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
