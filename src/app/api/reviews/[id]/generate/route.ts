@@ -204,7 +204,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Create response and version in a transaction
+    // Create response in a transaction
+    // Note: No version entry created here - version history only stores PREVIOUS versions
+    // when the user edits or regenerates. The current response doesn't need a version entry.
     const result = await prisma.$transaction(async (tx) => {
       // Create ReviewResponse
       const reviewResponse = await tx.reviewResponse.create({
@@ -214,16 +216,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           creditsUsed: CREDIT_COSTS.GENERATE_RESPONSE,
           toneUsed: tone || "default",
           generationModel: generatedResponse.model || DEFAULT_MODEL,
-        },
-      });
-
-      // Create initial ResponseVersion
-      await tx.responseVersion.create({
-        data: {
-          reviewResponseId: reviewResponse.id,
-          responseText,
-          toneUsed: tone || "default",
-          creditsUsed: CREDIT_COSTS.GENERATE_RESPONSE,
         },
       });
 

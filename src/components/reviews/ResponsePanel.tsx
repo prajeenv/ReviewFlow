@@ -143,6 +143,7 @@ export function ResponsePanel({
       const result = await res.json();
 
       if (result.success) {
+        // Update local state with new response (versions will be fetched via onResponseUpdate)
         setLocalResponse((prev) =>
           prev
             ? {
@@ -151,22 +152,12 @@ export function ResponsePanel({
                 toneUsed: result.data.response.toneUsed,
                 isEdited: false,
                 editedAt: null,
-                versions: [
-                  {
-                    id: `new-${Date.now()}`,
-                    responseText: result.data.response.responseText,
-                    toneUsed: result.data.response.toneUsed,
-                    creditsUsed: CREDIT_COSTS.REGENERATE_RESPONSE,
-                    createdAt: new Date().toISOString(),
-                  },
-                  ...prev.versions,
-                ],
               }
             : null
         );
         toast.success(`Response regenerated with ${tone} tone!`);
         refreshCredits();
-        onResponseUpdate?.();
+        onResponseUpdate?.(); // This will fetch fresh data including the new version
       } else {
         toast.error(result.error?.message || "Failed to regenerate response");
       }
@@ -238,7 +229,11 @@ export function ResponsePanel({
       const res = await fetch(`/api/reviews/${reviewId}/response`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responseText: version.responseText }),
+        body: JSON.stringify({
+          responseText: version.responseText,
+          toneUsed: version.toneUsed,
+          isRestore: true, // Don't create duplicate version entry
+        }),
       });
 
       const result = await res.json();
@@ -249,6 +244,7 @@ export function ResponsePanel({
             ? {
                 ...prev,
                 responseText: result.data.response.responseText,
+                toneUsed: result.data.response.toneUsed,
                 isEdited: result.data.response.isEdited,
                 editedAt: result.data.response.editedAt,
               }
@@ -477,7 +473,6 @@ export function ResponsePanel({
             <Separator />
             <ResponseVersionHistory
               versions={localResponse.versions}
-              currentResponseText={localResponse.responseText}
               textDirection={textDirection}
               onRestoreVersion={handleRestoreVersion}
             />

@@ -219,27 +219,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Update response and create version in a transaction
+    // Update response and save old version in a transaction
     const updatedResponse = await prisma.$transaction(async (tx) => {
-      // Update ReviewResponse
+      // First, save the CURRENT (old) response to version history
+      // This allows the user to restore to the previous version
+      await tx.responseVersion.create({
+        data: {
+          reviewResponseId: review.response!.id,
+          responseText: review.response!.responseText, // Save OLD text before overwriting
+          toneUsed: review.response!.toneUsed,
+          creditsUsed: review.response!.creditsUsed, // Credits used for the old generation
+        },
+      });
+
+      // Then update ReviewResponse with new text
       const updated = await tx.reviewResponse.update({
         where: { id: review.response!.id },
         data: {
           responseText,
           toneUsed: tone,
           generationModel: generatedResponse.model || DEFAULT_MODEL,
+          creditsUsed: CREDIT_COSTS.REGENERATE_RESPONSE,
           isEdited: false, // Reset edited flag on regeneration
           editedAt: null,
-        },
-      });
-
-      // Create new ResponseVersion
-      await tx.responseVersion.create({
-        data: {
-          reviewResponseId: updated.id,
-          responseText,
-          toneUsed: tone,
-          creditsUsed: CREDIT_COSTS.REGENERATE_RESPONSE,
         },
       });
 

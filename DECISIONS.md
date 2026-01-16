@@ -356,12 +356,15 @@ externalId and externalUrl in create	Available in schema but not in create form 
 | Non-streaming API calls | Simpler implementation; responses are short (<500 chars); streaming adds complexity without significant UX benefit |
 | Response truncation with sentence boundary | If AI generates >500 chars, truncates at last period after char 400 to avoid mid-sentence cuts |
 | Atomic credit deduction in transaction | Uses existing deductCreditsAtomic from db-utils; prevents race conditions |
-| Version history on every change | Creates ResponseVersion entry for generate, regenerate, and manual edits |
+| Version history preserves pre-edit state | Before each edit, current text is saved to history; allows restoration of any previous version |
 | 0 credits for manual edits | Edits don't consume credits since they don't use AI |
 | ResponsePanel component approach | Single component manages all response actions (view, edit, regenerate, copy, delete) |
 | In-place editing | Edit mode replaces response display with textarea rather than modal |
 | ToneModifier as dialog | Prevents accidental regeneration; shows credit cost; allows tone selection |
 | Collapsible version history | Reduces visual clutter; expands on demand |
+| Restore version without creating duplicates | Restoring a version updates current response without creating new version entry (version already exists in history) |
+| Generate button in review card header | Primary action prominently placed; tooltip shows credit cost |
+| ResponsePanel hidden when no response | Avoids duplicate "Generate" buttons; panel only appears after response exists |
 
 ### 2. Deviations from Phase 0 Specifications
 
@@ -375,9 +378,9 @@ externalId and externalUrl in create	Available in schema but not in create form 
 ### 3. Key Implementation Details
 
 **API Endpoints Created:**
-- `POST /api/reviews/[id]/generate` - Generate initial response (1.0 credit)
-- `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (1.0 credit)
-- `PUT /api/reviews/[id]/response` - Manual edit (0 credits)
+- `POST /api/reviews/[id]/generate` - Generate initial response (1.0 credit, NO version entry)
+- `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (1.0 credit, saves old text to history first)
+- `PUT /api/reviews/[id]/response` - Manual edit or restore version (0 credits)
 - `POST /api/reviews/[id]/publish` - Mark as approved
 - `DELETE /api/reviews/[id]/response` - Delete response and versions
 
@@ -385,6 +388,15 @@ externalId and externalUrl in create	Available in schema but not in create form 
 - Initial generation: 1.0 credits
 - Regeneration: 1.0 credits
 - Manual edit: 0 credits
+- Restore version: 0 credits
+
+**Version History Behavior:**
+Version history only stores PREVIOUS versions (what the response used to be), not the current response.
+- **Generate**: Creates response only. NO version entry (current text IS the live response)
+- **Regenerate**: Saves OLD (pre-regenerate) text to history, then updates response with new text (1.0 credit)
+- **Manual Edit**: Saves OLD (pre-edit) text to history, then updates response with new text (0 credits)
+- **Restore**: Updates response to restored text/tone WITHOUT creating new version (version already exists in history)
+- History only shows versions different from current text (filtered in UI)
 
 **Tone Modifiers:**
 - `professional` - Business-like, courteous, maintaining formal tone

@@ -20,7 +20,6 @@ interface Version {
 
 interface ResponseVersionHistoryProps {
   versions: Version[];
-  currentResponseText: string;
   textDirection?: "ltr" | "rtl";
   onRestoreVersion?: (version: Version) => void;
 }
@@ -36,7 +35,6 @@ function formatDate(dateString: string) {
 
 export function ResponseVersionHistory({
   versions,
-  currentResponseText,
   textDirection = "ltr",
   onRestoreVersion,
 }: ResponseVersionHistoryProps) {
@@ -44,15 +42,6 @@ export function ResponseVersionHistory({
   const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
 
   if (versions.length === 0) {
-    return null;
-  }
-
-  // Filter out the current version from history display
-  const historicalVersions = versions.filter(
-    (v) => v.responseText !== currentResponseText
-  );
-
-  if (historicalVersions.length === 0) {
     return null;
   }
 
@@ -66,7 +55,7 @@ export function ResponseVersionHistory({
         >
           <span className="flex items-center gap-2 text-sm">
             <History className="h-4 w-4" />
-            Version History ({historicalVersions.length})
+            Version History ({versions.length})
           </span>
           <ChevronDown
             className={`h-4 w-4 transition-transform ${
@@ -77,7 +66,7 @@ export function ResponseVersionHistory({
       </CollapsibleTrigger>
 
       <CollapsibleContent className="mt-2 space-y-2">
-        {historicalVersions.map((version) => {
+        {versions.map((version) => {
           const isExpanded = expandedVersionId === version.id;
           const truncatedText =
             version.responseText.length > 150
