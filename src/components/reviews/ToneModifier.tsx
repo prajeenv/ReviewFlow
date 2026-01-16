@@ -69,7 +69,12 @@ export function ToneModifier({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled || isLoading}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled || isLoading}
+          className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950"
+        >
           <Sparkles className="mr-2 h-4 w-4" />
           {isLoading ? "Regenerating..." : "Regenerate"}
         </Button>
