@@ -41,16 +41,29 @@ function needsExpansion(text: string): boolean {
   return lineCount > MAX_LINES || text.length > 150;
 }
 
-// Truncate text to MAX_LINES lines while preserving line breaks
+// Truncate text to MAX_LINES lines while preserving line breaks, max 150 chars
 function truncateText(text: string): string {
   const lines = text.split('\n');
+  let result: string;
+
+  if (lines.length <= MAX_LINES) {
+    result = text;
+  } else {
+    // Take first MAX_LINES lines
+    result = lines.slice(0, MAX_LINES).join('\n');
+  }
+
+  // Always enforce 150 char limit
+  if (result.length > 150) {
+    return result.substring(0, 150) + '...';
+  }
+
+  // Add ellipsis if we truncated by lines
   if (lines.length > MAX_LINES) {
-    return lines.slice(0, MAX_LINES).join('\n') + '...';
+    return result + '...';
   }
-  if (text.length > 150) {
-    return text.substring(0, 150) + '...';
-  }
-  return text;
+
+  return result;
 }
 
 export function ResponseVersionHistory({

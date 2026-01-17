@@ -90,22 +90,29 @@ function needsExpansion(text: string): boolean {
   return lineCount > 2 || text.length > 150;
 }
 
-// Truncate text to first 2 lines while preserving line breaks
+// Truncate text to first 2 lines while preserving line breaks, max 150 chars
 function truncateToTwoLines(text: string): string {
   const lines = text.split('\n');
+  let result: string;
+
   if (lines.length <= 2) {
-    // If 2 or fewer lines, check character length
-    const joined = lines.join('\n');
-    if (joined.length <= 150) {
-      return joined;
-    }
-    // Truncate by characters
-    return joined.substring(0, 150) + '...';
+    result = lines.join('\n');
+  } else {
+    // Take first 2 lines
+    result = lines.slice(0, 2).join('\n');
   }
-  // Take first 2 lines
-  const twoLines = lines.slice(0, 2).join('\n');
-  // Add ellipsis to indicate there's more
-  return twoLines + '...';
+
+  // Always enforce 150 char limit
+  if (result.length > 150) {
+    return result.substring(0, 150) + '...';
+  }
+
+  // Add ellipsis if we truncated by lines
+  if (lines.length > 2) {
+    return result + '...';
+  }
+
+  return result;
 }
 
 export function ReviewCard({ review, onDelete }: ReviewCardProps) {
