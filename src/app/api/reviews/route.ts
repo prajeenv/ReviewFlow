@@ -253,6 +253,13 @@ export async function GET(request: NextRequest) {
             isEdited: true,
             isPublished: true,
             createdAt: true,
+            updatedAt: true,
+            creditsUsed: true,
+            versions: {
+              select: {
+                creditsUsed: true,
+              },
+            },
           },
         },
       },
@@ -281,6 +288,10 @@ export async function GET(request: NextRequest) {
                 isEdited: review.response.isEdited,
                 isPublished: review.response.isPublished,
                 createdAt: review.response.createdAt.toISOString(),
+                updatedAt: review.response.updatedAt.toISOString(),
+                totalCreditsUsed:
+                  review.response.creditsUsed +
+                  review.response.versions.reduce((sum, v) => sum + v.creditsUsed, 0),
               }
             : null,
         })),

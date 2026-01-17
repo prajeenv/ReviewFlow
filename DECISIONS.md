@@ -2,7 +2,7 @@
 
 **Purpose:** Document all significant technical decisions, architectural choices, and deviations from original specifications.
 
-**Last Updated:** January 7, 2026
+**Last Updated:** January 18, 2026
 
 ---
 
@@ -380,7 +380,7 @@ externalId and externalUrl in create	Available in schema but not in create form 
 **API Endpoints Created:**
 - `POST /api/reviews/[id]/generate` - Generate initial response (1.0 credit, NO version entry)
 - `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (1.0 credit, saves old text to history first)
-- `PUT /api/reviews/[id]/response` - Manual edit (0 credits)
+- `PUT /api/reviews/[id]/response` - Manual edit or restore version (0 credits)
 - `POST /api/reviews/[id]/publish` - Mark as approved
 - `DELETE /api/reviews/[id]/response` - Delete response and versions
 
@@ -388,12 +388,14 @@ externalId and externalUrl in create	Available in schema but not in create form 
 - Initial generation: 1.0 credits
 - Regeneration: 1.0 credits
 - Manual edit: 0 credits
+- Restore version: 0 credits
 
 **Version History Behavior:**
-Version history stores PREVIOUS versions (what the response used to be) for reference only. No restore functionality.
+Version history only stores PREVIOUS versions (what the response used to be), not the current response.
 - **Generate**: Creates response only. NO version entry. Sets `ReviewResponse.creditsUsed = 1`
 - **Regenerate**: Saves OLD text to history (preserving its creditsUsed), then updates response. Sets `ReviewResponse.creditsUsed = 1`
 - **Manual Edit**: Saves OLD text to history (preserving its creditsUsed), then updates response. Sets `ReviewResponse.creditsUsed = 0`
+- **Restore**: Updates response to restored text/tone WITHOUT creating new version (version already exists in history)
 
 **Version History Credit Display:**
 The `creditsUsed` field tracks whether a version was AI-generated (1) or manually edited (0):
@@ -401,23 +403,38 @@ The `creditsUsed` field tracks whether a version was AI-generated (1) or manuall
 - After a manual edit, we set `ReviewResponse.creditsUsed = 0` so future history entries show 0 credits
 - After generate/regenerate, `ReviewResponse.creditsUsed = 1` so future history entries show 1 credit
 
-**Generated vs Edited Badge Display:**
+**Generated Badge Display:**
 The `isEdited` field tracks whether a response/version was AI-generated (false) or manually edited (true):
 - When saving to history, we preserve `review.response.isEdited` (whether the current response was edited)
 - After a manual edit, we set `ReviewResponse.isEdited = true`
 - After generate/regenerate, `ReviewResponse.isEdited = false`
-
-**Badge display rules:**
-- **Generated response** (`isEdited = false`): Shows "Generated" badge (blue, Sparkles icon) + tone + credit
-- **Edited response** (`isEdited = true`): Shows ONLY "Edited" badge (no tone, no credit, no Generated)
-  - Rationale: We don't know what changes the user made, so tone/credit info is not meaningful
+- UI shows "Generated" badge (blue, with Sparkles icon) when `isEdited = false`
+- UI shows "Edited" badge (outline) when `isEdited = true`
 
 Example flow:
-1. Generate (1 credit) → v1, `creditsUsed=1`, `isEdited=false` → shows "Generated | professional | 1 credit"
-2. Edit → saves v1 to history, response becomes `isEdited=true`. History: {v1(Generated | professional | 1 credit)}. Current shows: "Edited"
-3. Edit → saves v2 to history, response stays `isEdited=true`. History: {v2(Edited), v1(Generated | professional | 1 credit)}. Current shows: "Edited"
-4. Regenerate (1 credit) → saves v3 to history, response becomes `isEdited=false`. History: {v3(Edited), v2(Edited), v1(Generated | professional | 1 credit)}. Current shows: "Generated | friendly | 1 credit"
-5. Edit → saves v4 to history, response becomes `isEdited=true`. History: {v4(Generated | friendly | 1 credit), v3(Edited), v2(Edited), v1(Generated | professional | 1 credit)}. Current shows: "Edited"
+1. Generate (1 credit) → v1, `creditsUsed=1`, `isEdited=false` → shows "Generated" badge
+2. Edit → saves v1 to history with `creditsUsed=1`, `isEdited=false`, response becomes `creditsUsed=0`, `isEdited=true`. History: {v1(1 credit, Generated)}
+3. Edit → saves v2 to history with `creditsUsed=0`, `isEdited=true`, response stays `creditsUsed=0`, `isEdited=true`. History: {v2(Edited), v1(1 credit, Generated)}
+4. Regenerate (1 credit) → saves v3 to history with `creditsUsed=0`, `isEdited=true`, response becomes `creditsUsed=1`, `isEdited=false`. History: {v3(Edited), v2(Edited), v1(1 credit, Generated)}
+5. Edit → saves v4 to history with `creditsUsed=1`, `isEdited=false`, response becomes `creditsUsed=0`, `isEdited=true`. History: {v4(1 credit, Generated), v3(Edited), v2(Edited), v1(1 credit, Generated)}
+
+**Total Credits Used Per Review (Added January 18, 2026):**
+The `totalCreditsUsed` field is calculated by summing:
+- Current response's `creditsUsed` (credits for the current/latest generation)
+- All version history `creditsUsed` (credits for each previous generation/regeneration)
+
+Formula: `totalCreditsUsed = response.creditsUsed + sum(versions.creditsUsed)`
+
+Example:
+- Initial generation: 1 credit → total = 1
+- After 1 regeneration: 1 credit (current) + 1 credit (version 1) → total = 2
+- After 2 regenerations: 1 credit (current) + 1 credit (version 1) + 1 credit (version 2) → total = 3
+
+Edits don't consume credits (creditsUsed = 0), so they don't increase the total.
+
+This is displayed in:
+- Review list page: next to "AI Response:" label
+- Review details page: in the AI Response card header
 
 **Tone Modifiers:**
 - `professional` - Business-like, courteous, maintaining formal tone
@@ -623,4 +640,4 @@ Example flow:
 
 **Note:** This document should be updated after each prompt execution. When in doubt about whether something is a "decision," document it - better to over-document than under-document.
 
-**Last Reviewed:** January 7, 2026
+**Last Reviewed:** January 18, 2026

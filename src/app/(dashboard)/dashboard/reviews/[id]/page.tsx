@@ -64,11 +64,14 @@ interface ReviewDetail {
     isPublished: boolean;
     publishedAt: string | null;
     createdAt: string;
+    updatedAt: string;
+    totalCreditsUsed: number;
     versions: Array<{
       id: string;
       responseText: string;
       toneUsed: string;
       creditsUsed: number;
+      isEdited: boolean;
       createdAt: string;
     }>;
   } | null;
@@ -89,8 +92,7 @@ function getSentimentColor(sentiment: string | null) {
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -366,11 +368,11 @@ export default function ReviewDetailPage() {
             )}
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              Added {new Date(review.createdAt).toLocaleDateString()}
+              Added {formatDate(review.createdAt)}
             </span>
             {review.reviewDate && (
               <span>
-                Review Date {new Date(review.reviewDate).toLocaleDateString()}
+                Review Date {formatDate(review.reviewDate)}
               </span>
             )}
             {review.externalUrl && (

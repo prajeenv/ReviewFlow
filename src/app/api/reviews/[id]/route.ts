@@ -82,6 +82,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 isPublished: review.response.isPublished,
                 publishedAt: review.response.publishedAt?.toISOString() || null,
                 createdAt: review.response.createdAt.toISOString(),
+                updatedAt: review.response.updatedAt.toISOString(),
+                totalCreditsUsed:
+                  review.response.creditsUsed +
+                  review.response.versions.reduce((sum, v) => sum + v.creditsUsed, 0),
                 versions: review.response.versions.map((v) => ({
                   id: v.id,
                   responseText: v.responseText,

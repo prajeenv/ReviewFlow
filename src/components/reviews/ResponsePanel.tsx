@@ -26,6 +26,7 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  Coins,
 } from "lucide-react";
 import { ResponseEditor } from "./ResponseEditor";
 import { ToneModifier } from "./ToneModifier";
@@ -53,6 +54,8 @@ interface Response {
   isPublished: boolean;
   publishedAt: string | null;
   createdAt: string;
+  updatedAt: string;
+  totalCreditsUsed: number;
   versions: ResponseVersion[];
 }
 
@@ -267,6 +270,8 @@ export function ResponsePanel({
           isPublished: false,
           publishedAt: null,
           createdAt: result.data.response.createdAt,
+          updatedAt: result.data.response.createdAt,
+          totalCreditsUsed: result.data.response.creditsUsed,
           versions: [],
         });
         toast.success("Response generated successfully!");
@@ -340,6 +345,12 @@ export function ResponsePanel({
             <Sparkles className="h-5 w-5" />
             AI Response
           </CardTitle>
+          {localResponse.totalCreditsUsed > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              <Coins className="mr-1 h-3 w-3" />
+              {localResponse.totalCreditsUsed} credit{localResponse.totalCreditsUsed !== 1 ? "s" : ""} used
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -373,7 +384,7 @@ export function ResponsePanel({
           </div>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {formatDate(localResponse.createdAt)}
+            {formatDate(localResponse.updatedAt)}
           </span>
         </div>
 

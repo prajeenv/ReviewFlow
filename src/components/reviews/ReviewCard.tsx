@@ -15,6 +15,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,6 +52,8 @@ export interface ReviewCardData {
     isEdited: boolean;
     isPublished: boolean;
     createdAt: string;
+    updatedAt: string;
+    totalCreditsUsed: number;
   } | null;
 }
 
@@ -172,30 +175,36 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
             {/* Review content */}
             <div className="flex-1 min-w-0">
               {/* Badges row */}
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <Badge variant="outline" className="text-xs">
-                  {review.platform}
-                </Badge>
-                {review.sentiment && (
-                  <Badge
-                    className={`text-xs ${getSentimentColor(review.sentiment)}`}
-                    variant="secondary"
-                  >
-                    {review.sentiment}
-                  </Badge>
-                )}
-                {review.response && (
-                  <Badge variant="secondary" className="text-xs">
-                    <CheckCircle className="mr-1 h-3 w-3" />
-                    Responded
-                  </Badge>
-                )}
-                {review.detectedLanguage !== "English" && (
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="text-xs">
-                    <Globe className="mr-1 h-3 w-3" />
-                    {review.detectedLanguage}
+                    {review.platform}
                   </Badge>
-                )}
+                  {review.sentiment && (
+                    <Badge
+                      className={`text-xs ${getSentimentColor(review.sentiment)}`}
+                      variant="secondary"
+                    >
+                      {review.sentiment}
+                    </Badge>
+                  )}
+                  {review.response && (
+                    <Badge variant="secondary" className="text-xs">
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                      Responded
+                    </Badge>
+                  )}
+                  {review.detectedLanguage !== "English" && (
+                    <Badge variant="outline" className="text-xs">
+                      <Globe className="mr-1 h-3 w-3" />
+                      {review.detectedLanguage}
+                    </Badge>
+                  )}
+                </div>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {formatTimeAgo(review.createdAt)}
+                </span>
               </div>
 
               {/* Review text */}
@@ -230,19 +239,24 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
                 )}
               </div>
 
-              {/* Reviewer name */}
-              {review.reviewerName && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  - {review.reviewerName}
-                </p>
-              )}
-
               {/* Response preview */}
               {review.response && (
                 <div className="mt-3 p-2 bg-muted/50 rounded-md">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    AI Response:
-                  </p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                    <div className="flex items-center gap-2">
+                      <span>AI Response:</span>
+                      {review.response.totalCreditsUsed > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Coins className="h-3 w-3" />
+                          {review.response.totalCreditsUsed} credit{review.response.totalCreditsUsed !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {formatTimeAgo(review.response.updatedAt)}
+                    </span>
+                  </div>
                   <p
                     className="text-sm whitespace-pre-line"
                     dir={textDirection}
@@ -272,11 +286,6 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
                 </div>
               )}
 
-              {/* Timestamp */}
-              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                {formatTimeAgo(review.createdAt)}
-              </div>
             </div>
 
             {/* Actions dropdown */}
