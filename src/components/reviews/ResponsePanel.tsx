@@ -24,6 +24,8 @@ import {
   CheckCircle,
   Clock,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { ResponseEditor } from "./ResponseEditor";
 import { ToneModifier } from "./ToneModifier";
@@ -70,6 +72,23 @@ function formatDate(dateString: string) {
   });
 }
 
+const MAX_LINES = 10;
+
+// Helper to check if text needs "show more" (more than MAX_LINES lines)
+function needsExpansion(text: string): boolean {
+  const lineCount = (text.match(/\n/g) || []).length + 1;
+  return lineCount > MAX_LINES;
+}
+
+// Truncate text to MAX_LINES lines while preserving line breaks
+function truncateToLines(text: string, maxLines: number): string {
+  const lines = text.split('\n');
+  if (lines.length <= maxLines) {
+    return text;
+  }
+  return lines.slice(0, maxLines).join('\n') + '...';
+}
+
 export function ResponsePanel({
   reviewId,
   response,
@@ -81,6 +100,7 @@ export function ResponsePanel({
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [localResponse, setLocalResponse] = useState<Response | null>(response);
+  const [isResponseExpanded, setIsResponseExpanded] = useState(false);
 
   // Update local response when prop changes
   if (response?.responseText !== localResponse?.responseText && !isEditing) {
@@ -374,8 +394,28 @@ export function ResponsePanel({
                 className="text-sm leading-relaxed whitespace-pre-wrap"
                 dir={textDirection}
               >
-                {localResponse.responseText}
+                {isResponseExpanded ? localResponse.responseText : truncateToLines(localResponse.responseText, MAX_LINES)}
               </p>
+              {needsExpansion(localResponse.responseText) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground mt-2"
+                  onClick={() => setIsResponseExpanded(!isResponseExpanded)}
+                >
+                  {isResponseExpanded ? (
+                    <>
+                      <ChevronUp className="mr-1 h-3 w-3" />
+                      Show less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="mr-1 h-3 w-3" />
+                      Show more
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
 
             {/* Actions */}

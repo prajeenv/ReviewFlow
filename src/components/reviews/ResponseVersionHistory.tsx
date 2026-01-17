@@ -33,6 +33,26 @@ function formatDate(dateString: string) {
   });
 }
 
+const MAX_LINES = 3;
+
+// Helper to check if text needs "show more" (more than MAX_LINES lines or > 150 chars)
+function needsExpansion(text: string): boolean {
+  const lineCount = (text.match(/\n/g) || []).length + 1;
+  return lineCount > MAX_LINES || text.length > 150;
+}
+
+// Truncate text to MAX_LINES lines while preserving line breaks
+function truncateText(text: string): string {
+  const lines = text.split('\n');
+  if (lines.length > MAX_LINES) {
+    return lines.slice(0, MAX_LINES).join('\n') + '...';
+  }
+  if (text.length > 150) {
+    return text.substring(0, 150) + '...';
+  }
+  return text;
+}
+
 export function ResponseVersionHistory({
   versions,
   textDirection = "ltr",
@@ -67,10 +87,6 @@ export function ResponseVersionHistory({
       <CollapsibleContent className="mt-2 space-y-2">
         {versions.map((version) => {
           const isExpanded = expandedVersionId === version.id;
-          const truncatedText =
-            version.responseText.length > 150
-              ? version.responseText.substring(0, 150) + "..."
-              : version.responseText;
 
           return (
             <div
@@ -109,14 +125,14 @@ export function ResponseVersionHistory({
 
               {/* Content */}
               <div
-                className="text-sm text-muted-foreground"
+                className="text-sm text-muted-foreground whitespace-pre-wrap"
                 dir={textDirection}
               >
-                {isExpanded ? version.responseText : truncatedText}
+                {isExpanded ? version.responseText : truncateText(version.responseText)}
               </div>
 
               {/* Actions */}
-              {version.responseText.length > 150 && (
+              {needsExpansion(version.responseText) && (
                 <Button
                   variant="ghost"
                   size="sm"
