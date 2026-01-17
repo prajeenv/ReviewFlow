@@ -14,6 +14,8 @@ import {
   ExternalLink,
   Sparkles,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -95,6 +97,23 @@ function formatDate(dateString: string) {
   });
 }
 
+const MAX_LINES = 10;
+
+// Helper to check if text needs "show more" (more than MAX_LINES lines)
+function needsExpansion(text: string): boolean {
+  const lineCount = (text.match(/\n/g) || []).length + 1;
+  return lineCount > MAX_LINES;
+}
+
+// Truncate text to MAX_LINES lines while preserving line breaks
+function truncateToLines(text: string, maxLines: number): string {
+  const lines = text.split('\n');
+  if (lines.length <= maxLines) {
+    return text;
+  }
+  return lines.slice(0, maxLines).join('\n') + '...';
+}
+
 export default function ReviewDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -105,6 +124,7 @@ export default function ReviewDetailPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isReviewExpanded, setIsReviewExpanded] = useState(false);
   const { refreshCredits } = useCredits();
 
   useEffect(() => {
@@ -310,12 +330,34 @@ export default function ReviewDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Review text */}
-          <p
-            className="text-sm leading-relaxed whitespace-pre-wrap"
-            dir={textDirection}
-          >
-            {review.reviewText}
-          </p>
+          <div>
+            <p
+              className="text-sm leading-relaxed whitespace-pre-wrap"
+              dir={textDirection}
+            >
+              {isReviewExpanded ? review.reviewText : truncateToLines(review.reviewText, MAX_LINES)}
+            </p>
+            {needsExpansion(review.reviewText) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground mt-1"
+                onClick={() => setIsReviewExpanded(!isReviewExpanded)}
+              >
+                {isReviewExpanded ? (
+                  <>
+                    <ChevronUp className="mr-1 h-3 w-3" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="mr-1 h-3 w-3" />
+                    Show more
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
 
           {/* Reviewer and metadata inline */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">

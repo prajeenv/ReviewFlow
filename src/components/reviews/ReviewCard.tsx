@@ -13,6 +13,8 @@ import {
   Clock,
   Globe,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -82,12 +84,40 @@ function formatTimeAgo(dateString: string) {
   return date.toLocaleDateString();
 }
 
+// Helper to check if text needs "show more" (more than 2 lines or >150 chars)
+function needsExpansion(text: string): boolean {
+  const lineCount = (text.match(/\n/g) || []).length + 1;
+  return lineCount > 2 || text.length > 150;
+}
+
+// Truncate text to first 2 lines while preserving line breaks
+function truncateToTwoLines(text: string): string {
+  const lines = text.split('\n');
+  if (lines.length <= 2) {
+    // If 2 or fewer lines, check character length
+    const joined = lines.join('\n');
+    if (joined.length <= 150) {
+      return joined;
+    }
+    // Truncate by characters
+    return joined.substring(0, 150) + '...';
+  }
+  // Take first 2 lines
+  const twoLines = lines.slice(0, 2).join('\n');
+  // Add ellipsis to indicate there's more
+  return twoLines + '...';
+}
+
 export function ReviewCard({ review, onDelete }: ReviewCardProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReviewExpanded, setIsReviewExpanded] = useState(false);
+  const [isResponseExpanded, setIsResponseExpanded] = useState(false);
 
   const textDirection = getTextDirection(review.detectedLanguage);
+  const reviewNeedsExpansion = needsExpansion(review.reviewText);
+  const responseNeedsExpansion = review.response && needsExpansion(review.response.responseText);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -162,14 +192,36 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
               </div>
 
               {/* Review text */}
-              <Link href={`/dashboard/reviews/${review.id}`}>
-                <p
-                  className="text-sm line-clamp-2 hover:text-primary cursor-pointer"
-                  dir={textDirection}
-                >
-                  {review.reviewText}
-                </p>
-              </Link>
+              <div>
+                <Link href={`/dashboard/reviews/${review.id}`}>
+                  <p
+                    className="text-sm whitespace-pre-line hover:text-primary cursor-pointer"
+                    dir={textDirection}
+                  >
+                    {isReviewExpanded ? review.reviewText : truncateToTwoLines(review.reviewText)}
+                  </p>
+                </Link>
+                {reviewNeedsExpansion && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setIsReviewExpanded(!isReviewExpanded)}
+                  >
+                    {isReviewExpanded ? (
+                      <>
+                        <ChevronUp className="mr-1 h-3 w-3" />
+                        Show less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="mr-1 h-3 w-3" />
+                        Show more
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
 
               {/* Reviewer name */}
               {review.reviewerName && (
@@ -184,9 +236,32 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
                   <p className="text-xs text-muted-foreground mb-1">
                     AI Response:
                   </p>
-                  <p className="text-sm line-clamp-2" dir={textDirection}>
-                    {review.response.responseText}
+                  <p
+                    className="text-sm whitespace-pre-line"
+                    dir={textDirection}
+                  >
+                    {isResponseExpanded ? review.response.responseText : truncateToTwoLines(review.response.responseText)}
                   </p>
+                  {responseNeedsExpansion && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground mt-1"
+                      onClick={() => setIsResponseExpanded(!isResponseExpanded)}
+                    >
+                      {isResponseExpanded ? (
+                        <>
+                          <ChevronUp className="mr-1 h-3 w-3" />
+                          Show less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="mr-1 h-3 w-3" />
+                          Show more
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               )}
 
