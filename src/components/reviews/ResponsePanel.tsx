@@ -7,19 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Sparkles,
   Edit,
-  Trash2,
   Copy,
   CheckCircle,
   Clock,
@@ -101,7 +90,6 @@ export function ResponsePanel({
   const { refreshCredits } = useCredits();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [localResponse, setLocalResponse] = useState<Response | null>(response);
   const [isResponseExpanded, setIsResponseExpanded] = useState(false);
 
@@ -215,30 +203,6 @@ export function ResponsePanel({
         onResponseUpdate?.();
       } else {
         toast.error(result.error?.message || "Failed to approve response");
-      }
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/reviews/${reviewId}/response`, {
-        method: "DELETE",
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        setLocalResponse(null);
-        setShowDeleteDialog(false);
-        toast.success("Response deleted");
-        onResponseUpdate?.();
-      } else {
-        toast.error(result.error?.message || "Failed to delete response");
       }
     } catch {
       toast.error("Something went wrong");
@@ -465,16 +429,6 @@ export function ResponsePanel({
                   Approve
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-destructive hover:text-destructive ml-auto"
-                onClick={() => setShowDeleteDialog(true)}
-                disabled={isLoading}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
             </div>
           </>
         )}
@@ -490,29 +444,6 @@ export function ResponsePanel({
           </>
         )}
       </CardContent>
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Response</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this response? This action cannot
-              be undone. All version history will also be deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isLoading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isLoading ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 }

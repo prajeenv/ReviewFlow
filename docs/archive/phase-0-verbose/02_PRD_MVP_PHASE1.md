@@ -649,8 +649,11 @@ async function saveEditedResponse(
 ---
 
 #### Story 3.4: Delete Response Only
-**As a** user  
-**I want to** delete just the AI response without deleting the review  
+
+> **DEPRECATED (January 18, 2026):** This feature was removed as redundant. Users can regenerate responses instead of deleting them. The code below is kept for historical reference only.
+
+**As a** user
+**I want to** delete just the AI response without deleting the review
 **So that** I can regenerate a different response
 
 **Acceptance Criteria:**

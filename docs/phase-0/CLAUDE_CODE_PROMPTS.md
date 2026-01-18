@@ -821,19 +821,15 @@ Implement AI-powered response generation using Claude API.
    **POST /api/reviews/[id]/publish** - Approve response
    - Set isPublished = true
    - Set publishedAt timestamp
-   
-   **DELETE /api/reviews/[id]/response** - Delete response
-   - Delete ReviewResponse and all versions (cascade)
 
 3. **Response UI Components**
    Create `src/components/reviews/`:
-   
+
    **ResponsePanel.tsx:**
    - Show generated response
    - "Edit" button
    - "Regenerate" button with tone selector
    - "Approve" button
-   - "Delete" button
    - Loading state during generation
    
    **ResponseEditor.tsx:**

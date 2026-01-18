@@ -798,6 +798,8 @@ END: Batch workflow completed efficiently
 
 ### Flow 12B: Delete Response Only
 
+> **DEPRECATED (January 18, 2026):** This flow was removed as redundant. Users can regenerate responses instead of deleting them. Kept for historical reference only.
+
 **Goal:** Delete AI response without deleting the review
 
 ```

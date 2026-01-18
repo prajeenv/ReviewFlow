@@ -324,7 +324,6 @@ POST   /reviews/:id/generate  → Generate AI response
 POST   /reviews/:id/regenerate → Regenerate with different tone
 PUT    /reviews/:id/response  → Edit response
 POST   /reviews/:id/publish   → Approve/publish response
-DELETE /reviews/:id/response  → Delete response
 GET    /reviews/:id/versions  → Get version history
 ```
 

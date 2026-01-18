@@ -382,7 +382,6 @@ externalId and externalUrl in create	Available in schema but not in create form 
 - `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (1.0 credit, saves old text to history first)
 - `PUT /api/reviews/[id]/response` - Manual edit or restore version (0 credits)
 - `POST /api/reviews/[id]/publish` - Mark as approved
-- `DELETE /api/reviews/[id]/response` - Delete response and versions
 
 **Credit Costs:**
 - Initial generation: 1.0 credits
@@ -630,6 +629,12 @@ This is displayed in:
 ---
 
 ## Change Log
+
+**January 18, 2026**
+- Removed "Delete Response" feature (redundant - users can regenerate instead)
+  - Removed DELETE /api/reviews/[id]/response endpoint
+  - Removed Delete button and confirmation dialog from ResponsePanel
+  - Note: Deleting a Review still cascades to delete its response (unchanged)
 
 **January 7, 2026**
 - Created DECISIONS.md template

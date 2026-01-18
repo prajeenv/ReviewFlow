@@ -248,7 +248,7 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
                       {review.response.totalCreditsUsed > 0 && (
                         <span className="flex items-center gap-1">
                           <Coins className="h-3 w-3" />
-                          {review.response.totalCreditsUsed} credit{review.response.totalCreditsUsed !== 1 ? "s" : ""}
+                          {review.response.totalCreditsUsed} credit{review.response.totalCreditsUsed !== 1 ? "s" : ""} used
                         </span>
                       )}
                     </div>

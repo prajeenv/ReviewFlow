@@ -1211,6 +1211,8 @@ curl -X PUT https://api.reviewflow.com/v1/reviews/rev_abc123/response \
 
 ### DELETE /reviews/:id/response
 
+> **DEPRECATED (January 18, 2026):** This endpoint was removed. Users can regenerate responses instead. Kept for historical reference only.
+
 **Description:** Delete response only (keep review)
 
 **Authentication:** Required

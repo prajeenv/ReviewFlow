@@ -84,7 +84,6 @@ Reviews added → AI generates response in same language → User edits (optiona
 - POST `/api/reviews/[id]/regenerate` - Regenerate with tone (1.0 credit)
 - PUT `/api/reviews/[id]/response` - Manual edit (0 credits)
 - POST `/api/reviews/[id]/publish` - Mark as approved
-- DELETE `/api/reviews/[id]/response` - Delete response
 - ResponsePanel component for response display and actions
 - ResponseEditor component for inline editing with char counter
 - ToneModifier dialog for regeneration tone selection
@@ -319,7 +318,6 @@ DEEPSEEK_API_KEY="sk-..."           # For sentiment analysis (optional - has fal
 - `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier (1.0 credit)
 - `PUT /api/reviews/[id]/response` - Edit response manually (0 credits)
 - `POST /api/reviews/[id]/publish` - Mark response as approved
-- `DELETE /api/reviews/[id]/response` - Delete response and versions
 
 ---
 
@@ -418,7 +416,6 @@ When user signs up or accesses brand voice for first time:
 - **POST /api/reviews/[id]/regenerate**: Regenerate with tone modifier (1.0 credit)
 - **PUT /api/reviews/[id]/response**: Manual edit (0 credits, marks as edited)
 - **POST /api/reviews/[id]/publish**: Mark response as approved
-- **DELETE /api/reviews/[id]/response**: Delete response and all versions
 
 ### Tone Modifiers for Regeneration
 - `professional` - Business-like, courteous, maintaining formal tone
@@ -426,7 +423,7 @@ When user signs up or accesses brand voice for first time:
 - `empathetic` - Understanding, compassionate, showing genuine care
 
 ### UI Components Created
-- **ResponsePanel**: Main response display with all actions (view, edit, regenerate, copy, approve, delete)
+- **ResponsePanel**: Main response display with all actions (view, edit, regenerate, copy, approve)
 - **ResponseEditor**: Inline text editor with character counter (max 500)
 - **ToneModifier**: Dialog for selecting regeneration tone with credit cost display
 - **ResponseVersionHistory**: Collapsible version list with restore capability
