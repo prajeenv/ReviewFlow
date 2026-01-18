@@ -560,12 +560,6 @@ Test the brand voice test panel with different review texts and tones
 2. Verify "Approved" badge appears
 3. Verify publishedAt timestamp set
 
-**Delete Flow:**
-1. Click "Delete" on response
-2. Confirm deletion
-3. Verify response and versions removed
-4. Verify "Generate Response" button returns
-
 **Copy Flow:**
 1. Click "Copy" button
 2. Paste in text editor
@@ -573,9 +567,8 @@ Test the brand voice test panel with different review texts and tones
 
 **Version History:**
 1. Generate response, regenerate a few times
-2. Expand version history
-3. Click "Restore this version" on older version
-4. Verify response text reverts
+2. Expand version history section
+3. Verify older versions are listed with their tone and credit info
 
 ### 5. Before Moving to Next Prompt
 
@@ -588,12 +581,11 @@ Test the brand voice test panel with different review texts and tones
 
 ### 6. What Was Completed in Prompt 7
 
-**API Endpoints (5 total):**
+**API Endpoints (4 total):**
 - `POST /api/reviews/[id]/generate` - Generate initial AI response
 - `POST /api/reviews/[id]/regenerate` - Regenerate with tone modifier
 - `PUT /api/reviews/[id]/response` - Edit response manually
 - `POST /api/reviews/[id]/publish` - Mark as approved
-- `DELETE /api/reviews/[id]/response` - Delete response
 
 **UI Components (4 total):**
 - `ResponsePanel.tsx` - Main response display with all actions

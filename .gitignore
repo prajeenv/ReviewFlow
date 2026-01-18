@@ -67,6 +67,20 @@ next-env.d.ts
 Thumbs.db
 Desktop.ini
 
+
+# Obsidian
+.obsidian/
+
+# Local-only Obsidian notes
+/docs/_private/
+
+
+# Claude Code temp files
+tmpclaude-*
+dev.log
+nul
+*.png
+
 # ===========================================
 # When to Revisit:
 # Add more to .gitignore when you:
@@ -74,4 +88,4 @@ Desktop.ini
 # - Add testing → Add test output directories
 # - Generate a lot of temp files → Add those specific patterns
 # - Notice unwanted files in git status → Add them then
-# ===========================================dev.log
+# ===========================================
