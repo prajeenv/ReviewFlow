@@ -43,6 +43,7 @@ export interface ReviewCardData {
   reviewText: string;
   rating: number | null;
   reviewerName: string | null;
+  reviewDate: string | null;
   detectedLanguage: string;
   sentiment: string | null;
   createdAt: string;
@@ -80,11 +81,18 @@ function formatTimeAgo(dateString: string) {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
+  // Within 2 days, show relative time
   if (diffInSeconds < 60) return "just now";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  return date.toLocaleDateString();
+  if (diffInSeconds < 172800) return `${Math.floor(diffInSeconds / 86400)}d ago`; // 2 days = 172800 seconds
+
+  // Beyond 2 days, show formatted date (e.g., "Jan 16, 2026")
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 // Helper to check if text needs "show more" (more than 2 lines or >150 chars)
@@ -202,8 +210,16 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
                   )}
                 </div>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  {review.reviewerName && (
+                    <>
+                      <span>by {review.reviewerName}</span>
+                      <span>·</span>
+                    </>
+                  )}
                   <Clock className="h-3 w-3" />
-                  {formatTimeAgo(review.createdAt)}
+                  {review.reviewDate
+                    ? `Reviewed ${formatTimeAgo(review.reviewDate)}`
+                    : `Added ${formatTimeAgo(review.createdAt)}`}
                 </span>
               </div>
 

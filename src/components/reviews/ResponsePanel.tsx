@@ -55,12 +55,22 @@ interface ResponsePanelProps {
   onResponseUpdate?: () => void;
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", {
+function formatTimeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  // Within 2 days, show relative time
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 172800) return `${Math.floor(diffInSeconds / 86400)}d ago`; // 2 days = 172800 seconds
+
+  // Beyond 2 days, show formatted date (e.g., "Jan 16, 2026")
+  return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    year: "numeric",
   });
 }
 
@@ -348,7 +358,7 @@ export function ResponsePanel({
           </div>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {formatDate(localResponse.updatedAt)}
+            {formatTimeAgo(localResponse.updatedAt)}
           </span>
         </div>
 

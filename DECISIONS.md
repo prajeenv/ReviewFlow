@@ -673,6 +673,14 @@ This is displayed in:
 
 ## Change Log
 
+**January 19, 2026**
+- Standardized date formatting across all pages (dashboard, review list, review details, responses, version history)
+  - Relative time for dates within 2 days: "just now", "5m ago", "3h ago", "1d ago"
+  - Absolute date for dates beyond 2 days: "Jan 16, 2026" format
+  - Review date (when customer wrote review) takes priority over created date (when added to system)
+  - Labels: "Reviewed X ago" for review date, "Added X ago" for created date fallback
+  - Added reviewer name display in review list (right side, next to timestamp)
+
 **January 18, 2026**
 - Removed "Delete Response" feature (redundant - users can regenerate instead)
   - Removed DELETE /api/reviews/[id]/response endpoint

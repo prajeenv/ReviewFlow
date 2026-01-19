@@ -36,6 +36,7 @@ export async function GET() {
             reviewText: true,
             rating: true,
             sentiment: true,
+            reviewDate: true,
             createdAt: true,
             response: {
               select: {
@@ -135,6 +136,7 @@ export async function GET() {
       reviewText: review.reviewText,
       rating: review.rating,
       sentiment: review.sentiment,
+      reviewDate: review.reviewDate?.toISOString() || null,
       createdAt: review.createdAt.toISOString(),
       hasResponse: !!review.response,
     }));
