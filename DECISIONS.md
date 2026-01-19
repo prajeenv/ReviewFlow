@@ -505,13 +505,83 @@ This is displayed in:
 
 ## Prompt 9: Credit System
 
-*Decisions to be added after completing Prompt 9*
+### 1. Technical Decisions Made
 
-**Potential Decisions:**
-- Credit reset timing (1st of month per spec)
-- Usage logging granularity
-- Fraud detection thresholds
-- Credit exhaustion handling
+| Decision | Reason |
+|----------|--------|
+| Reused existing credit infrastructure | Most credit system was already built in Prompts 5-8 (deductCreditsAtomic, CreditUsage tracking, QuotaCard display) |
+| GET /api/credits endpoint | Dedicated endpoint for fetching credit balance; reuses logic from dashboard/stats but focused on credits only |
+| GET /api/credits/usage with pagination | Paginated endpoint (20 records default, max 100) with date range and action filters |
+| Credit usage CSV export | Client-side CSV generation for user data export; no server-side file storage needed |
+| LowCreditWarning component | Dismissible alert banner when credits < 3; shows different styles for low credits vs zero credits |
+| Pricing page as placeholder | Shows all 3 tiers with "Coming Soon" buttons; no payment integration yet (MVP scope) |
+| Monthly reset utility (resetMonthlyCredits) | Batch function for cron job use; processes all users with expired creditsResetDate |
+| Reset date calculation uses first of next month UTC | Consistent reset timing across all timezones; `Date.UTC(year, month+1, 1, 0, 0, 0, 0)` |
+| MONTHLY_RESET action logged to CreditUsage | Audit trail includes previous/new credits, tier, and reset dates for compliance |
+| shouldResetCredits helper function | Quick check for individual user reset status; useful for on-demand checks |
+
+### 2. Deviations from Phase 0 Specifications
+
+| Spec | Implementation | Why | Risk |
+|------|----------------|-----|------|
+| Spec mentioned running balance in usage table | Not implemented | Running balance requires complex calculation and adds UI complexity; users can see current balance in header | Low ✅ |
+| Spec mentioned cron job setup | Created utility function only | Cron job infrastructure depends on deployment platform; function is ready for Vercel Cron or external service | Low ✅ |
+| Spec mentioned Stripe integration | Placeholder pricing page | Payment integration is explicitly marked "Coming Soon" per MVP scope | None - intentional |
+
+### 3. Key Implementation Details
+
+**Credit APIs Created:**
+- `GET /api/credits` - Returns full credit and sentiment quota status with tier info
+- `GET /api/credits/usage` - Paginated usage history with filters (action, date range)
+
+**Credit Balance Response Format:**
+```typescript
+{
+  credits: { remaining, total, used, resetDate },
+  sentiment: { remaining, total, used, resetDate },
+  tier: "FREE" | "STARTER" | "GROWTH"
+}
+```
+
+**Usage History Features:**
+- Pagination: page, limit (default 20, max 100)
+- Filters: action type, date range
+- Includes: review preview (50 chars), platform, tone used
+- CSV export with proper date formatting
+
+**Low Credit Warning Thresholds:**
+- Yellow warning: credits < 3
+- Red alert: credits = 0
+- Dismissible (session-based)
+- CTA links to pricing page
+
+**Monthly Reset Logic (for future cron job):**
+```typescript
+async function resetMonthlyCredits(): Promise<{
+  success: boolean;
+  usersReset: number;
+  errors: string[];
+  details: Array<{userId, tier, creditsReset, sentimentReset}>;
+}>
+```
+- Finds users where `creditsResetDate < now`
+- Resets credits and sentimentUsed to tier defaults
+- Sets next reset date to first of next month (UTC)
+- Logs MONTHLY_RESET action to CreditUsage for audit
+
+**Pricing Page:**
+- 3 tiers: FREE ($0), STARTER ($29), GROWTH ($79)
+- Feature comparison with checkmarks
+- "Current Plan" badge for authenticated users
+- "Coming Soon" disabled upgrade buttons
+- FAQ section about credits, quotas, and reset timing
+
+**Fraud Prevention (Already Implemented):**
+- `deductCreditsAtomic()` uses Prisma transactions with row locking
+- Credit check before AI generation (not after)
+- HTTP 402 returned for insufficient credits
+- All operations logged in CreditUsage table
+- No credits deducted if AI generation fails
 
 ---
 
@@ -672,6 +742,16 @@ This is displayed in:
 ---
 
 ## Change Log
+
+**January 19, 2026 (Prompt 9)**
+- Implemented credit system management features:
+  - GET /api/credits endpoint for credit balance
+  - GET /api/credits/usage endpoint with pagination and filters
+  - Credit Usage History page at /dashboard/settings/usage
+  - LowCreditWarning component on dashboard (shows when credits < 3)
+  - Pricing page placeholder at /pricing
+  - Monthly reset utility function (resetMonthlyCredits)
+- Updated settings page to include Credit Usage History and Pricing links
 
 **January 19, 2026**
 - Standardized date formatting across all pages (dashboard, review list, review details, responses, version history)

@@ -354,15 +354,27 @@ export async function incrementSentimentUsage(
 // ============================================
 
 /**
+ * Tier limits configuration
+ */
+const TIER_LIMITS_CONFIG: Record<Tier, { credits: number; sentiment: number }> = {
+  FREE: { credits: 15, sentiment: 35 },
+  STARTER: { credits: 60, sentiment: 150 },
+  GROWTH: { credits: 200, sentiment: 500 },
+};
+
+/**
+ * Calculate next month's reset date (first day of next month at midnight UTC)
+ */
+function getNextMonthResetDate(): Date {
+  const now = new Date();
+  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+  return nextMonth;
+}
+
+/**
  * Reset monthly credits for a user based on tier
  */
 export async function resetUserCredits(userId: string) {
-  const tierLimits: Record<Tier, { credits: number; sentiment: number }> = {
-    FREE: { credits: 15, sentiment: 35 },
-    STARTER: { credits: 60, sentiment: 150 },
-    GROWTH: { credits: 200, sentiment: 500 },
-  };
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { tier: true },
@@ -370,17 +382,150 @@ export async function resetUserCredits(userId: string) {
 
   if (!user) return null;
 
-  const limits = tierLimits[user.tier];
+  const limits = TIER_LIMITS_CONFIG[user.tier];
+  const nextResetDate = getNextMonthResetDate();
 
   return prisma.user.update({
     where: { id: userId },
     data: {
       credits: limits.credits,
-      creditsResetDate: new Date(),
+      creditsResetDate: nextResetDate,
       sentimentUsed: 0,
-      sentimentResetDate: new Date(),
+      sentimentQuota: limits.sentiment,
+      sentimentResetDate: nextResetDate,
     },
   });
+}
+
+/**
+ * Reset monthly credits for all users whose reset date has passed
+ * This function is intended to be called by a cron job
+ *
+ * Logic:
+ * - Find users where creditsResetDate < now
+ * - Reset credits to tier default
+ * - Reset sentimentUsed to 0
+ * - Update reset dates to next month
+ * - Log operations for audit
+ *
+ * @returns Summary of reset operations
+ */
+export async function resetMonthlyCredits(): Promise<{
+  success: boolean;
+  usersReset: number;
+  errors: string[];
+  details: Array<{ userId: string; tier: Tier; creditsReset: number; sentimentReset: number }>;
+}> {
+  const errors: string[] = [];
+  const details: Array<{ userId: string; tier: Tier; creditsReset: number; sentimentReset: number }> = [];
+
+  try {
+    const now = new Date();
+
+    // Find all users whose reset date has passed
+    const usersToReset = await prisma.user.findMany({
+      where: {
+        creditsResetDate: {
+          lt: now,
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        tier: true,
+        credits: true,
+        sentimentUsed: true,
+      },
+    });
+
+    if (usersToReset.length === 0) {
+      return {
+        success: true,
+        usersReset: 0,
+        errors: [],
+        details: [],
+      };
+    }
+
+    const nextResetDate = getNextMonthResetDate();
+
+    // Process each user in a transaction
+    for (const user of usersToReset) {
+      try {
+        const limits = TIER_LIMITS_CONFIG[user.tier];
+
+        await prisma.$transaction(async (tx) => {
+          // Reset user credits
+          await tx.user.update({
+            where: { id: user.id },
+            data: {
+              credits: limits.credits,
+              creditsResetDate: nextResetDate,
+              sentimentUsed: 0,
+              sentimentQuota: limits.sentiment,
+              sentimentResetDate: nextResetDate,
+            },
+          });
+
+          // Log the reset operation in CreditUsage for audit trail
+          // Using negative credits to indicate "credit addition" from reset
+          await tx.creditUsage.create({
+            data: {
+              userId: user.id,
+              creditsUsed: -(limits.credits - user.credits), // Negative = credits added
+              action: "MONTHLY_RESET",
+              details: JSON.stringify({
+                previousCredits: user.credits,
+                newCredits: limits.credits,
+                previousSentimentUsed: user.sentimentUsed,
+                tier: user.tier,
+                resetDate: now.toISOString(),
+                nextResetDate: nextResetDate.toISOString(),
+              }),
+            },
+          });
+        });
+
+        details.push({
+          userId: user.id,
+          tier: user.tier,
+          creditsReset: limits.credits,
+          sentimentReset: limits.sentiment,
+        });
+      } catch (userError) {
+        const errorMessage = userError instanceof Error ? userError.message : "Unknown error";
+        errors.push(`Failed to reset user ${user.id}: ${errorMessage}`);
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      usersReset: details.length,
+      errors,
+      details,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return {
+      success: false,
+      usersReset: 0,
+      errors: [`Fatal error during monthly reset: ${errorMessage}`],
+      details: [],
+    };
+  }
+}
+
+/**
+ * Check if user's credits need to be reset
+ */
+export async function shouldResetCredits(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { creditsResetDate: true },
+  });
+
+  if (!user) return false;
+  return user.creditsResetDate < new Date();
 }
 
 // ============================================

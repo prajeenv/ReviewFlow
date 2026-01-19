@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatsCard, QuotaCard, SentimentDistributionCard, EmptyReviews } from "@/components/dashboard";
+import { StatsCard, QuotaCard, SentimentDistributionCard, EmptyReviews, LowCreditWarning } from "@/components/dashboard";
 
 interface DashboardStats {
   credits: {
@@ -139,6 +139,16 @@ export default function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Low credit warning */}
+      {!isLoading && stats && (
+        <LowCreditWarning
+          creditsRemaining={stats.credits.remaining}
+          creditsTotal={stats.credits.total}
+          tier={stats.tier}
+          resetDate={stats.credits.resetDate}
+        />
+      )}
 
       {/* Quota cards */}
       <div className="grid gap-4 sm:grid-cols-2">

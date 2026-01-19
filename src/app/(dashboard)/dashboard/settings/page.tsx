@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, User, CreditCard, Bell, ChevronRight } from "lucide-react";
+import { MessageSquare, User, CreditCard, Bell, ChevronRight, History } from "lucide-react";
 
 const settingsSections = [
   {
@@ -10,6 +10,13 @@ const settingsSections = [
     description: "Configure how AI generates responses to match your brand's unique voice and style.",
     href: "/dashboard/settings/brand-voice",
     icon: MessageSquare,
+    available: true,
+  },
+  {
+    title: "Credit Usage History",
+    description: "View your credit usage history and response generation records.",
+    href: "/dashboard/settings/usage",
+    icon: History,
     available: true,
   },
   {
@@ -21,12 +28,11 @@ const settingsSections = [
     comingSoon: true,
   },
   {
-    title: "Billing & Credits",
-    description: "View your subscription plan, credit usage, and billing history.",
-    href: "/dashboard/settings/billing",
+    title: "Billing & Subscription",
+    description: "Upgrade your plan and manage billing.",
+    href: "/pricing",
     icon: CreditCard,
-    available: false,
-    comingSoon: true,
+    available: true,
   },
   {
     title: "Notifications",
