@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatsCard, QuotaCard, EmptyReviews } from "@/components/dashboard";
+import { StatsCard, QuotaCard, SentimentDistributionCard, EmptyReviews } from "@/components/dashboard";
 
 interface DashboardStats {
   credits: {
@@ -38,6 +38,12 @@ interface DashboardStats {
     totalReviews: number;
     totalResponses: number;
     avgEditRate: number;
+  };
+  sentimentDistribution: {
+    positive: number;
+    neutral: number;
+    negative: number;
+    total: number;
   };
   recentReviews: Array<{
     id: string;
@@ -170,6 +176,15 @@ export default function DashboardPage() {
           isLoading={isLoading}
         />
       </div>
+
+      {/* Sentiment distribution */}
+      <SentimentDistributionCard
+        positive={stats?.sentimentDistribution?.positive ?? 0}
+        neutral={stats?.sentimentDistribution?.neutral ?? 0}
+        negative={stats?.sentimentDistribution?.negative ?? 0}
+        total={stats?.sentimentDistribution?.total ?? 0}
+        isLoading={isLoading}
+      />
 
       {/* Recent reviews section */}
       <div>

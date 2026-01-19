@@ -95,6 +95,111 @@ interface QuotaCardProps {
   isLoading?: boolean;
 }
 
+interface SentimentDistributionProps {
+  positive: number;
+  neutral: number;
+  negative: number;
+  total: number;
+  className?: string;
+  isLoading?: boolean;
+}
+
+export function SentimentDistributionCard({
+  positive,
+  neutral,
+  negative,
+  total,
+  className,
+  isLoading = false,
+}: SentimentDistributionProps) {
+  if (isLoading) {
+    return (
+      <Card className={className}>
+        <CardHeader className="pb-2">
+          <Skeleton className="h-4 w-32" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const hasData = total > 0;
+
+  return (
+    <Card className={cn("transition-shadow hover:shadow-md", className)}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          Sentiment Distribution
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {hasData ? (
+          <>
+            {/* Stacked bar chart */}
+            <div className="flex h-6 w-full overflow-hidden rounded-full bg-secondary">
+              {positive > 0 && (
+                <div
+                  className="bg-green-500 transition-all duration-300"
+                  style={{ width: `${positive}%` }}
+                  title={`Positive: ${positive}%`}
+                />
+              )}
+              {neutral > 0 && (
+                <div
+                  className="bg-gray-400 transition-all duration-300"
+                  style={{ width: `${neutral}%` }}
+                  title={`Neutral: ${neutral}%`}
+                />
+              )}
+              {negative > 0 && (
+                <div
+                  className="bg-red-500 transition-all duration-300"
+                  style={{ width: `${negative}%` }}
+                  title={`Negative: ${negative}%`}
+                />
+              )}
+            </div>
+
+            {/* Legend */}
+            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="h-3 w-3 rounded-full bg-green-500" />
+                <span className="text-muted-foreground">Positive</span>
+                <span className="font-medium">{positive}%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-3 w-3 rounded-full bg-gray-400" />
+                <span className="text-muted-foreground">Neutral</span>
+                <span className="font-medium">{neutral}%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-3 w-3 rounded-full bg-red-500" />
+                <span className="text-muted-foreground">Negative</span>
+                <span className="font-medium">{negative}%</span>
+              </div>
+            </div>
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              Based on {total} analyzed review{total !== 1 ? "s" : ""}
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No sentiment data yet. Add reviews to see distribution.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function QuotaCard({
   title,
   used,

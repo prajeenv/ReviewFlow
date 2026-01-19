@@ -89,6 +89,39 @@ export async function GET() {
         ? Math.round((editedResponses / totalResponses) * 100)
         : 0;
 
+    // Get sentiment distribution
+    const sentimentCounts = await prisma.review.groupBy({
+      by: ["sentiment"],
+      where: {
+        userId: session.user.id,
+        sentiment: { not: null },
+      },
+      _count: {
+        sentiment: true,
+      },
+    });
+
+    const totalWithSentiment = sentimentCounts.reduce(
+      (sum, item) => sum + item._count.sentiment,
+      0
+    );
+
+    const sentimentDistribution = {
+      positive: 0,
+      neutral: 0,
+      negative: 0,
+      total: totalWithSentiment,
+    };
+
+    for (const item of sentimentCounts) {
+      if (item.sentiment && item.sentiment in sentimentDistribution) {
+        sentimentDistribution[item.sentiment as "positive" | "neutral" | "negative"] =
+          totalWithSentiment > 0
+            ? Math.round((item._count.sentiment / totalWithSentiment) * 100)
+            : 0;
+      }
+    }
+
     // Get tier limits
     const tierLimits = TIER_LIMITS[user.tier as SubscriptionTier] || TIER_LIMITS.FREE;
 
@@ -127,6 +160,7 @@ export async function GET() {
           totalResponses,
           avgEditRate,
         },
+        sentimentDistribution,
         recentReviews,
       },
     });

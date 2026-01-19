@@ -2,7 +2,7 @@
 
 **Purpose:** Document all significant technical decisions, architectural choices, and deviations from original specifications.
 
-**Last Updated:** January 18, 2026
+**Last Updated:** January 19, 2026
 
 ---
 
@@ -450,13 +450,56 @@ This is displayed in:
 
 ## Prompt 8: Sentiment Analysis
 
-*Decisions to be added after completing Prompt 8*
+### 1. Technical Decisions Made
 
-**Potential Decisions:**
-- DeepSeek model version
-- Sentiment classification approach (3-class vs 5-class)
-- Batch size for batch analysis
-- Quota reset timing (1st of month per spec)
+| Decision | Reason |
+|----------|--------|
+| DeepSeek Chat model (deepseek-chat) | Cost-effective sentiment classification; 10x cheaper than Claude for this task |
+| 3-class sentiment (positive/neutral/negative) | Simpler classification is sufficient for review analysis; avoids false precision |
+| Keyword-based fallback | When DeepSeek API unavailable, uses comprehensive keyword matching for sentiment |
+| Low temperature (0.1) | Ensures consistent classification; reduces randomness in sentiment results |
+| Separate quota from credits | Sentiment uses its own quota (35/150/500 per tier) independent of response credits |
+| Non-blocking sentiment analysis | Review creation succeeds even if sentiment API fails; sentiment is "nice to have" |
+| Stacked bar chart for distribution | Visual, intuitive display of sentiment breakdown; familiar pattern |
+| Sentiment badges with colors | Green for positive, gray for neutral, red for negative; universal color coding |
+
+### 2. Deviations from Phase 0 Specifications
+
+| Spec | Implementation | Why | Risk |
+|------|----------------|-----|------|
+| Spec mentioned batch analysis | Not implemented | Manual review input doesn't need batch; will add for CSV import in Phase 2 | Low - deferred to appropriate phase |
+| Spec mentioned cron job for quota reset | Not yet implemented | Quota tracking works; reset logic can be triggered manually or via Vercel cron in Prompt 10 | Low - already tracking dates |
+| Sentiment emoji badges | Text-only badges | Cleaner UI; emojis can be distracting in professional context | None - preference |
+
+### 3. Key Implementation Details
+
+**DeepSeek API Integration:**
+- Uses `https://api.deepseek.com/v1/chat/completions` endpoint
+- Model: `deepseek-chat` (fast, cheap)
+- Temperature: 0.1 for consistent results
+- Max tokens: 10 (only need one word: positive/neutral/negative)
+- 10 second timeout to avoid blocking
+
+**Fallback Sentiment Analysis:**
+- Activated when DEEPSEEK_API_KEY not set or API errors
+- Uses 40+ positive keywords (great, excellent, amazing, etc.)
+- Uses 40+ negative keywords (terrible, awful, worst, etc.)
+- Compares keyword counts to determine sentiment
+- Returns 0.6 confidence (vs 0.9 for API)
+
+**API Endpoints Created:**
+- `GET /api/sentiment/usage` - Sentiment usage history with distribution stats
+
+**Dashboard Integration:**
+- `SentimentDistributionCard` component shows stacked bar chart
+- Distribution percentages calculated: positive%, neutral%, negative%
+- Shows total analyzed reviews count
+
+**Quota Tracking:**
+- `user.sentimentUsed` tracks monthly usage
+- `user.sentimentQuota` stores tier limit
+- `user.sentimentResetDate` stores next reset date
+- `SentimentUsage` table logs each analysis for audit trail
 
 ---
 
@@ -645,4 +688,4 @@ This is displayed in:
 
 **Note:** This document should be updated after each prompt execution. When in doubt about whether something is a "decision," document it - better to over-document than under-document.
 
-**Last Reviewed:** January 18, 2026
+**Last Reviewed:** January 19, 2026
