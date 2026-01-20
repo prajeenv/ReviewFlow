@@ -2,7 +2,7 @@
 
 **Purpose:** Document all significant technical decisions, architectural choices, and deviations from original specifications.
 
-**Last Updated:** January 19, 2026
+**Last Updated:** January 20, 2026
 
 ---
 
@@ -495,11 +495,11 @@ This is displayed in:
 - Distribution percentages calculated: positive%, neutral%, negative%
 - Shows total analyzed reviews count
 
-**Quota Tracking:**
-- `user.sentimentUsed` tracks monthly usage
-- `user.sentimentQuota` stores tier limit
+**Quota Tracking (Updated January 20, 2026):**
+- `user.sentimentCredits` stores remaining sentiment credits (balance model)
 - `user.sentimentResetDate` stores next reset date
 - `SentimentUsage` table logs each analysis for audit trail
+- Note: Previously used `sentimentUsed` + `sentimentQuota` (usage model), now standardized to balance model
 
 ---
 
@@ -519,6 +519,64 @@ This is displayed in:
 | Anniversary-based reset (30 days) | Fair billing for mid-month signups; each user's cycle is 30 days from signup, not calendar-aligned |
 | MONTHLY_RESET action logged to CreditUsage | Audit trail includes previous/new credits, tier, and reset dates for compliance |
 | shouldResetCredits helper function | Quick check for individual user reset status; useful for on-demand checks |
+| **Standardized sentiment to balance model** | **Changed from usage model (sentimentUsed + sentimentQuota) to balance model (sentimentCredits) for consistency with response credits** |
+
+### Schema Change: Sentiment Credits Standardization (January 20, 2026)
+
+**What:** Changed sentiment credit tracking from usage model to balance model
+**Why:** Consistency with response credits which already use balance model
+**Risk Level:** Low ✅
+
+**Before (Usage Model):**
+```prisma
+sentimentQuota      Int       @default(35)  // Maximum allowed
+sentimentUsed       Int       @default(0)   // How many used
+```
+
+**After (Balance Model):**
+```prisma
+sentimentCredits    Int       @default(35)  // Remaining credits
+```
+
+**Benefits:**
+1. **Consistency**: Both credit types follow the same pattern
+2. **Simplicity**: One field instead of two
+3. **Clarity**: "35 credits remaining" is clearer than "0 used of 35 quota"
+4. **Efficiency**: Fewer fields to read/update in database operations
+
+**API Response Format (Unchanged):**
+```json
+{
+  "sentiment": {
+    "remaining": 30,
+    "total": 35,
+    "used": 5,
+    "resetDate": "2026-02-19T00:00:00.000Z"
+  }
+}
+```
+Total is now derived from tier limits instead of stored `sentimentQuota`.
+
+**Files Modified:**
+- `prisma/schema.prisma` - Schema change
+- `src/lib/db-utils.ts` - Updated utility functions
+- `src/lib/auth.ts` - OAuth user initialization
+- `src/app/api/auth/signup/route.ts` - Email signup
+- `src/app/api/credits/route.ts` - Credit balance API
+- `src/app/api/dashboard/stats/route.ts` - Dashboard stats API
+- `src/app/api/sentiment/usage/route.ts` - Sentiment usage API
+- `src/app/api/reviews/route.ts` - Review creation with sentiment
+- `src/types/database.ts` - Type definitions
+- `scripts/test-db.ts` - Database test script
+
+**Database Migration (SQL for Supabase):**
+```sql
+ALTER TABLE users ADD COLUMN "sentimentCredits" INTEGER DEFAULT 35;
+UPDATE users SET "sentimentCredits" = "sentimentQuota" - "sentimentUsed";
+-- After code deployment:
+ALTER TABLE users DROP COLUMN "sentimentUsed";
+ALTER TABLE users DROP COLUMN "sentimentQuota";
+```
 
 ### 2. Deviations from Phase 0 Specifications
 
@@ -565,7 +623,7 @@ async function resetMonthlyCredits(): Promise<{
 }>
 ```
 - Finds users where `creditsResetDate < now`
-- Resets credits and sentimentUsed to tier defaults
+- Resets credits and sentimentCredits to tier defaults
 - Sets next reset date to 30 days from current reset date (anniversary-based)
 - Logs MONTHLY_RESET action to CreditUsage for audit
 - Cron job should run daily to catch users whose reset date has passed
@@ -737,6 +795,7 @@ async function resetMonthlyCredits(): Promise<{
 | 2 | DeepSeek for sentiment | Phase 0 | Jan 5 | Low ✅ | ✅ Spec |
 | 3 | Three tiers (no Enterprise) | Phase 0 | Jan 5 | Low ✅ | ✅ Spec |
 | 4 | Manual input first | Phase 0 | Jan 5 | Low ✅ | ✅ Spec |
+| 5 | Sentiment balance model | Post-Prompt 9 | Jan 20 | Low ✅ | ✅ Implemented |
 
 *Table will grow as decisions are made*
 
@@ -755,6 +814,13 @@ async function resetMonthlyCredits(): Promise<{
 - Updated settings page to include Credit Usage History and Pricing links
 
 **January 20, 2026**
+- Standardized sentiment credits to balance model (major schema change)
+  - Changed from `sentimentUsed` + `sentimentQuota` to single `sentimentCredits` field
+  - Matches how response credits work (balance model)
+  - Modified 10 files across schema, APIs, auth, and types
+  - SQL migration required for production database
+  - See "Schema Change: Sentiment Credits Standardization" section above for details
+
 - Changed credit reset from calendar-based (first of month) to anniversary-based (30 days from signup)
   - Fairer billing for mid-month signups
   - New users get creditsResetDate set to 30 days from signup
@@ -785,4 +851,4 @@ async function resetMonthlyCredits(): Promise<{
 
 **Note:** This document should be updated after each prompt execution. When in doubt about whether something is a "decision," document it - better to over-document than under-document.
 
-**Last Reviewed:** January 20, 2026
+**Last Reviewed:** January 20, 2026 (Sentiment credits standardization)

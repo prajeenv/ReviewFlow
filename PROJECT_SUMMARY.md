@@ -1,8 +1,8 @@
 # ReviewFlow Project Summary
 
-**Last Updated:** January 15, 2026
+**Last Updated:** January 20, 2026
 **Repository:** https://github.com/prajeenv/ReviewFlow
-**Current Status:** Prompt 7 Complete - Ready for Prompt 8
+**Current Status:** Prompt 9 Complete - Credit System & Sentiment Standardization
 
 ---
 
@@ -269,6 +269,7 @@ DEEPSEEK_API_KEY="sk-..."           # For sentiment analysis (optional - has fal
 | reviewDate validation too strict | Changed from `datetime()` to regex that accepts YYYY-MM-DD format |
 | ESLint unused vars in type declarations | Prefixed callback params with underscore in interface definitions |
 | use(params) runtime error | Replaced with useParams() hook for Next.js 14 compatibility |
+| Sentiment credits inconsistency | Standardized from usage model (sentimentUsed + sentimentQuota) to balance model (sentimentCredits) |
 
 ---
 
@@ -283,7 +284,11 @@ DEEPSEEK_API_KEY="sk-..."           # For sentiment analysis (optional - has fal
 **Credit Costs:**
 - Response generation: 1.0 credits
 - Response regeneration: 1.0 credit
-- Sentiment analysis: 0.3 (against sentiment quota)
+- Sentiment analysis: 1 (against sentimentCredits quota)
+
+**Credit Models:**
+- Response credits: Balance model (`credits` = remaining)
+- Sentiment credits: Balance model (`sentimentCredits` = remaining)
 
 ---
 
@@ -331,12 +336,10 @@ DEEPSEEK_API_KEY="sk-..."           # For sentiment analysis (optional - has fal
 
 ---
 
-## Remaining Prompts (8-10)
+## Remaining Prompts
 
 | Prompt | Description |
 |--------|-------------|
-| **8** | Sentiment Analysis - DeepSeek API improvements, batch analysis, quota tracking |
-| **9** | Credit System - Usage history page, low credit warnings, monthly reset cron |
 | **10** | Testing & Deployment - E2E testing, multi-language verification, Vercel deployment |
 
 ---
@@ -363,8 +366,8 @@ npx tsx scripts/test-db.ts
 
 ## Latest Commit
 
-**Commit:** `269b88f`
-**Message:** feat: Implement AI response generation with Claude API (Prompt 7)
+**Commit:** `0d91332`
+**Message:** refactor: Standardize sentiment credits to balance model
 **Branch:** main
 
 ---
@@ -435,19 +438,38 @@ When user signs up or accesses brand voice for first time:
 
 ---
 
+## Prompt 8 & 9 Complete
+
+### Prompt 8: Sentiment Analysis
+- DeepSeek API integration with keyword-based fallback
+- Automatic sentiment on review creation
+- Sentiment usage tracking and distribution stats
+- Dashboard analytics with distribution chart
+
+### Prompt 9: Credit System
+- Credit balance API endpoints
+- Usage history page with filters and CSV export
+- Low credit warning component
+- Monthly reset utility (anniversary-based: 30 days per user)
+- Pricing page placeholder
+
+### Post-Prompt 9: Sentiment Credits Standardization (January 20, 2026)
+- Changed from usage model (`sentimentUsed` + `sentimentQuota`) to balance model (`sentimentCredits`)
+- Now consistent with response credits (`credits` field)
+- Single field tracks remaining credits
+- API response format unchanged (derives total from tier limits)
+
+---
+
 ## Notes for Next Session
 
-1. **Prompt 8** is next: Sentiment Analysis improvements
+1. **Prompt 10** is next: Testing & Deployment
 2. **ANTHROPIC_API_KEY is REQUIRED** for response generation (already configured)
 3. **DEEPSEEK_API_KEY** is optional (has keyword-based fallback)
 4. All environment variables are configured in `.env.local`
-5. AI response generation is fully functional and tested
-6. Reference `docs/phase-0/CORE_SPECS.md` for Prompt 8 specifications
-7. Prompt 8 will need:
-   - DeepSeek API integration improvements
-   - Batch sentiment analysis endpoint
-   - Sentiment quota tracking
-   - Monthly reset cron job
+5. All features through Prompt 9 are functional and tested
+6. Sentiment credits now use balance model (sentimentCredits) like response credits
+7. Database migration SQL is in DECISIONS.md for production deployment
 8. Current user in database: `prajeen.builder@gmail.com` (has both credentials and Google linked)
 9. The Claude service is at `src/lib/ai/claude.ts` with tone modifier support
 10. The DeepSeek service is at `src/lib/ai/deepseek.ts` with fallback logic

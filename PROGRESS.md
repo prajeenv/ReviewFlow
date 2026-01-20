@@ -778,6 +778,13 @@ Test the brand voice test panel with different review texts and tones
 - QuotaCard component displaying credits
 - 402 status code for insufficient credits
 
+**Post-Prompt 9 Enhancement (January 20, 2026):**
+- Standardized sentiment credits from usage model to balance model
+- Changed from `sentimentUsed` + `sentimentQuota` to single `sentimentCredits` field
+- Matches how response credits work for consistency
+- Modified 10 files: schema, db-utils, auth, signup, 4 API routes, types, test script
+- Database migration SQL provided in DECISIONS.md
+
 ---
 
 ### ⏳ Prompt 10: Testing, Deployment & Finalization
@@ -914,4 +921,4 @@ npx prisma studio
 ---
 
 **Last Updated:** January 20, 2026
-**Status:** Prompt 9 complete - Credit System implemented
+**Status:** Prompt 9 complete - Credit System implemented, Sentiment credits standardized to balance model
