@@ -62,15 +62,18 @@ export function LowCreditWarning({
           <div>
             {isOutOfCredits ? (
               <p>
-                You&apos;ve used all your credits for this month.{" "}
+                You&apos;ve used all your credits.{" "}
                 {formattedResetDate && (
-                  <span>Credits will reset on {formattedResetDate}.</span>
+                  <span>Resets on {formattedResetDate}.</span>
                 )}
               </p>
             ) : (
               <p>
                 You have only <strong>{creditsRemaining}</strong> of{" "}
-                <strong>{creditsTotal}</strong> credits remaining this month.
+                <strong>{creditsTotal}</strong> credits remaining.{" "}
+                {formattedResetDate && (
+                  <span>Resets on {formattedResetDate}.</span>
+                )}
               </p>
             )}
             {tier === "FREE" && (
