@@ -764,9 +764,9 @@ Test the brand voice test panel with different review texts and tones
 - `LowCreditWarning.tsx` - Dismissible alert banner for low/zero credits
 
 **Utilities (1 enhanced):**
-- `resetMonthlyCredits()` - Batch reset function for cron job use
+- `resetMonthlyCredits()` - Batch reset function for cron job use (anniversary-based: 30 days per user)
 - `shouldResetCredits()` - Check if user needs reset
-- `getNextMonthResetDate()` - Calculate next reset date
+- `getNextResetDate()` - Calculate next reset date (30 days from current reset date)
 
 **Updates:**
 - Settings page now includes "Credit Usage History" and "Billing & Subscription" links
@@ -913,5 +913,5 @@ npx prisma studio
 
 ---
 
-**Last Updated:** January 19, 2026
+**Last Updated:** January 20, 2026
 **Status:** Prompt 9 complete - Credit System implemented

@@ -224,15 +224,16 @@ export default function PricingPage() {
             <div>
               <h3 className="font-semibold mb-2">When do credits reset?</h3>
               <p className="text-muted-foreground text-sm">
-                Credits and sentiment quotas reset on the first day of each month. Unused credits
-                do not roll over to the next month.
+                Credits and sentiment quotas reset every 30 days from your signup date (anniversary billing).
+                For example, if you signed up on January 15th, your credits will reset on February 14th,
+                March 16th, and so on. Unused credits do not roll over.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Can I upgrade mid-month?</h3>
+              <h3 className="font-semibold mb-2">Can I upgrade anytime?</h3>
               <p className="text-muted-foreground text-sm">
-                Yes! When you upgrade, you&apos;ll immediately receive the difference in credits
-                between your current and new plan. Your billing cycle will adjust accordingly.
+                Yes! When you upgrade, you&apos;ll immediately receive the full credits for your new plan.
+                Your 30-day billing cycle continues from your original signup date.
               </p>
             </div>
             <div>

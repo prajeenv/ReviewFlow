@@ -26,6 +26,9 @@ model User {
   password            String?   // bcrypt hashed, null if OAuth only
 
   // Subscription & Credits
+  // Note: creditsResetDate and sentimentResetDate are set to now()+30days in application code
+  // during user creation (auth.ts signIn event, signup route). The @default(now()) is only
+  // a fallback for direct database inserts. Anniversary-based billing: 30-day cycles per user.
   tier                Tier      @default(FREE)
   credits             Int       @default(15)
   creditsResetDate    DateTime  @default(now())

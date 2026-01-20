@@ -515,8 +515,8 @@ This is displayed in:
 | Credit usage CSV export | Client-side CSV generation for user data export; no server-side file storage needed |
 | LowCreditWarning component | Dismissible alert banner when credits < 3; shows different styles for low credits vs zero credits |
 | Pricing page as placeholder | Shows all 3 tiers with "Coming Soon" buttons; no payment integration yet (MVP scope) |
-| Monthly reset utility (resetMonthlyCredits) | Batch function for cron job use; processes all users with expired creditsResetDate |
-| Reset date calculation uses first of next month UTC | Consistent reset timing across all timezones; `Date.UTC(year, month+1, 1, 0, 0, 0, 0)` |
+| Monthly reset utility (resetMonthlyCredits) | Batch function for cron job use (daily recommended); processes all users with expired creditsResetDate |
+| Anniversary-based reset (30 days) | Fair billing for mid-month signups; each user's cycle is 30 days from signup, not calendar-aligned |
 | MONTHLY_RESET action logged to CreditUsage | Audit trail includes previous/new credits, tier, and reset dates for compliance |
 | shouldResetCredits helper function | Quick check for individual user reset status; useful for on-demand checks |
 
@@ -555,7 +555,7 @@ This is displayed in:
 - Dismissible (session-based)
 - CTA links to pricing page
 
-**Monthly Reset Logic (for future cron job):**
+**Reset Logic (anniversary-based, for future cron job):**
 ```typescript
 async function resetMonthlyCredits(): Promise<{
   success: boolean;
@@ -566,8 +566,9 @@ async function resetMonthlyCredits(): Promise<{
 ```
 - Finds users where `creditsResetDate < now`
 - Resets credits and sentimentUsed to tier defaults
-- Sets next reset date to first of next month (UTC)
+- Sets next reset date to 30 days from current reset date (anniversary-based)
 - Logs MONTHLY_RESET action to CreditUsage for audit
+- Cron job should run daily to catch users whose reset date has passed
 
 **Pricing Page:**
 - 3 tiers: FREE ($0), STARTER ($29), GROWTH ($79)
@@ -753,6 +754,14 @@ async function resetMonthlyCredits(): Promise<{
   - Monthly reset utility function (resetMonthlyCredits)
 - Updated settings page to include Credit Usage History and Pricing links
 
+**January 20, 2026**
+- Changed credit reset from calendar-based (first of month) to anniversary-based (30 days from signup)
+  - Fairer billing for mid-month signups
+  - New users get creditsResetDate set to 30 days from signup
+  - `getNextResetDate()` now calculates 30 days from current reset date per user
+  - Updated auth.ts, signup/route.ts, and db-utils.ts
+  - Updated pricing page FAQ to explain anniversary billing
+
 **January 19, 2026**
 - Standardized date formatting across all pages (dashboard, review list, review details, responses, version history)
   - Relative time for dates within 2 days: "just now", "5m ago", "3h ago", "1d ago"
@@ -776,4 +785,4 @@ async function resetMonthlyCredits(): Promise<{
 
 **Note:** This document should be updated after each prompt execution. When in doubt about whether something is a "decision," document it - better to over-document than under-document.
 
-**Last Reviewed:** January 19, 2026
+**Last Reviewed:** January 20, 2026

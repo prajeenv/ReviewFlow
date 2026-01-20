@@ -172,6 +172,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   events: {
     async signIn({ user, isNewUser }) {
       if (isNewUser && user.id) {
+        // Calculate reset date as 30 days from now (anniversary-based billing)
+        const resetDate = new Date();
+        resetDate.setUTCDate(resetDate.getUTCDate() + 30);
+        resetDate.setUTCHours(0, 0, 0, 0);
+
         // Initialize new user with default values
         await prisma.user.update({
           where: { id: user.id },
@@ -180,8 +185,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             tier: "FREE",
             sentimentQuota: 35,
             sentimentUsed: 0,
-            creditsResetDate: new Date(),
-            sentimentResetDate: new Date(),
+            creditsResetDate: resetDate,
+            sentimentResetDate: resetDate,
           },
         });
 

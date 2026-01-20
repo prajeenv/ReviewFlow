@@ -363,27 +363,30 @@ const TIER_LIMITS_CONFIG: Record<Tier, { credits: number; sentiment: number }> =
 };
 
 /**
- * Calculate next month's reset date (first day of next month at midnight UTC)
+ * Calculate next reset date (30 days from a given date)
+ * Uses anniversary-based billing - each user's cycle is 30 days from their signup/last reset
  */
-function getNextMonthResetDate(): Date {
-  const now = new Date();
-  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0));
-  return nextMonth;
+function getNextResetDate(fromDate: Date = new Date()): Date {
+  const nextReset = new Date(fromDate);
+  nextReset.setUTCDate(nextReset.getUTCDate() + 30);
+  nextReset.setUTCHours(0, 0, 0, 0);
+  return nextReset;
 }
 
 /**
- * Reset monthly credits for a user based on tier
+ * Reset credits for a user based on tier (anniversary-based: 30 days from current reset date)
  */
 export async function resetUserCredits(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { tier: true },
+    select: { tier: true, creditsResetDate: true },
   });
 
   if (!user) return null;
 
   const limits = TIER_LIMITS_CONFIG[user.tier];
-  const nextResetDate = getNextMonthResetDate();
+  // Calculate next reset as 30 days from the user's current reset date (anniversary-based)
+  const nextResetDate = getNextResetDate(user.creditsResetDate);
 
   return prisma.user.update({
     where: { id: userId },
@@ -398,14 +401,14 @@ export async function resetUserCredits(userId: string) {
 }
 
 /**
- * Reset monthly credits for all users whose reset date has passed
- * This function is intended to be called by a cron job
+ * Reset credits for all users whose reset date has passed (anniversary-based)
+ * This function is intended to be called by a cron job (daily recommended)
  *
  * Logic:
  * - Find users where creditsResetDate < now
  * - Reset credits to tier default
  * - Reset sentimentUsed to 0
- * - Update reset dates to next month
+ * - Update reset dates to 30 days from their current reset date (anniversary-based)
  * - Log operations for audit
  *
  * @returns Summary of reset operations
@@ -435,6 +438,7 @@ export async function resetMonthlyCredits(): Promise<{
         tier: true,
         credits: true,
         sentimentUsed: true,
+        creditsResetDate: true,
       },
     });
 
@@ -447,12 +451,12 @@ export async function resetMonthlyCredits(): Promise<{
       };
     }
 
-    const nextResetDate = getNextMonthResetDate();
-
     // Process each user in a transaction
     for (const user of usersToReset) {
       try {
         const limits = TIER_LIMITS_CONFIG[user.tier];
+        // Anniversary-based: 30 days from the user's current reset date
+        const nextResetDate = getNextResetDate(user.creditsResetDate);
 
         await prisma.$transaction(async (tx) => {
           // Reset user credits

@@ -70,6 +70,11 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Calculate reset date as 30 days from now (anniversary-based billing)
+    const resetDate = new Date();
+    resetDate.setUTCDate(resetDate.getUTCDate() + 30);
+    resetDate.setUTCHours(0, 0, 0, 0);
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -80,8 +85,8 @@ export async function POST(request: Request) {
         tier: "FREE",
         sentimentQuota: 35,
         sentimentUsed: 0,
-        creditsResetDate: new Date(),
-        sentimentResetDate: new Date(),
+        creditsResetDate: resetDate,
+        sentimentResetDate: resetDate,
       },
     });
 
