@@ -230,8 +230,20 @@ export function QuotaCard({
   const isLow = percentage >= 80;
   const isEmpty = remaining <= 0;
 
-  const formattedResetDate = resetDate
-    ? new Date(resetDate).toLocaleDateString("en-US", {
+  // Calculate next reset date (creditsResetDate + 30 days)
+  // creditsResetDate stores the last reset date, so next reset is always +30 days
+  const getNextResetDate = () => {
+    if (!resetDate) return null;
+
+    const storedDate = new Date(resetDate);
+    const nextReset = new Date(storedDate);
+    nextReset.setUTCDate(nextReset.getUTCDate() + 30);
+    return nextReset;
+  };
+
+  const nextResetDate = getNextResetDate();
+  const formattedResetDate = nextResetDate
+    ? nextResetDate.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       })
