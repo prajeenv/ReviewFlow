@@ -54,7 +54,7 @@ async function main() {
     console.log(`   ✅ Found user: ${foundUser?.email}`);
     console.log(`   ✅ Default tier: ${foundUser?.tier}`);
     console.log(`   ✅ Default credits: ${foundUser?.credits}`);
-    console.log(`   ✅ Default sentiment quota: ${foundUser?.sentimentQuota}`);
+    console.log(`   ✅ Default sentiment credits: ${foundUser?.sentimentCredits}`);
 
     // Update
     const updatedUser = await prisma.user.update({

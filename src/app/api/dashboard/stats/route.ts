@@ -26,8 +26,7 @@ export async function GET() {
         tier: true,
         credits: true,
         creditsResetDate: true,
-        sentimentQuota: true,
-        sentimentUsed: true,
+        sentimentCredits: true,
         sentimentResetDate: true,
         reviews: {
           select: {
@@ -151,9 +150,9 @@ export async function GET() {
           resetDate: user.creditsResetDate.toISOString(),
         },
         sentiment: {
-          remaining: user.sentimentQuota - user.sentimentUsed,
-          total: user.sentimentQuota,
-          used: user.sentimentUsed,
+          remaining: user.sentimentCredits,
+          total: tierLimits.sentimentQuota,
+          used: tierLimits.sentimentQuota - user.sentimentCredits,
           resetDate: user.sentimentResetDate.toISOString(),
         },
         tier: user.tier,

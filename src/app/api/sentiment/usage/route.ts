@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { TIER_LIMITS } from "@/lib/constants";
+import type { SubscriptionTier } from "@/lib/constants";
 
 /**
  * GET /api/sentiment/usage - Get sentiment usage history
@@ -73,12 +75,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get user's sentiment quota info
+    // Get user's sentiment credits info
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
-        sentimentUsed: true,
-        sentimentQuota: true,
+        tier: true,
+        sentimentCredits: true,
         sentimentResetDate: true,
       },
     });
@@ -119,12 +121,15 @@ export async function GET(request: NextRequest) {
           total: totalWithSentiment,
         },
         quota: user
-          ? {
-              used: user.sentimentUsed,
-              total: user.sentimentQuota,
-              remaining: user.sentimentQuota - user.sentimentUsed,
-              resetDate: user.sentimentResetDate.toISOString(),
-            }
+          ? (() => {
+              const tierLimits = TIER_LIMITS[user.tier as SubscriptionTier] || TIER_LIMITS.FREE;
+              return {
+                used: tierLimits.sentimentQuota - user.sentimentCredits,
+                total: tierLimits.sentimentQuota,
+                remaining: user.sentimentCredits,
+                resetDate: user.sentimentResetDate.toISOString(),
+              };
+            })()
           : null,
       },
     });

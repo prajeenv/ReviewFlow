@@ -32,8 +32,7 @@ model User {
   tier                Tier      @default(FREE)
   credits             Int       @default(15)
   creditsResetDate    DateTime  @default(now())
-  sentimentQuota      Int       @default(35)
-  sentimentUsed       Int       @default(0)
+  sentimentCredits    Int       @default(35)
   sentimentResetDate  DateTime  @default(now())
 
   // Timestamps

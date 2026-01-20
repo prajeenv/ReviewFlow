@@ -44,13 +44,12 @@ export async function POST(request: NextRequest) {
 
     const { platform, reviewText, rating, reviewerName, reviewDate, detectedLanguage: userOverrideLanguage } = validationResult.data;
 
-    // Get user for quota check
+    // Get user for credits check
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
         id: true,
-        sentimentUsed: true,
-        sentimentQuota: true,
+        sentimentCredits: true,
         sentimentResetDate: true,
       },
     });
@@ -93,11 +92,11 @@ export async function POST(request: NextRequest) {
     const languageResult = detectLanguage(reviewText);
     const finalLanguage = userOverrideLanguage || languageResult.language;
 
-    // Check sentiment quota
+    // Check sentiment credits
     let sentiment: string | null = null;
     let sentimentAnalyzed = false;
 
-    if (user.sentimentUsed < user.sentimentQuota) {
+    if (user.sentimentCredits > 0) {
       // Run sentiment analysis
       const sentimentResult = await analyzeSentiment(reviewText);
       sentiment = sentimentResult.sentiment;
@@ -118,7 +117,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Log sentiment usage if analyzed
+    // Log sentiment usage and deduct credits if analyzed
     if (sentimentAnalyzed && sentiment) {
       await prisma.$transaction([
         prisma.sentimentUsage.create({
@@ -136,7 +135,7 @@ export async function POST(request: NextRequest) {
         }),
         prisma.user.update({
           where: { id: session.user.id },
-          data: { sentimentUsed: { increment: 1 } },
+          data: { sentimentCredits: { decrement: 1 } },
         }),
       ]);
     }
@@ -164,7 +163,7 @@ export async function POST(request: NextRequest) {
           },
           sentimentAnalyzed,
           ...(sentimentAnalyzed ? {} : {
-            sentimentWarning: "Sentiment analysis skipped: monthly quota reached",
+            sentimentWarning: "Sentiment analysis skipped: no credits remaining",
           }),
         },
       },

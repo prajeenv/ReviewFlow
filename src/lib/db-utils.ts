@@ -24,8 +24,7 @@ export async function getUserWithCredits(userId: string) {
       tier: true,
       credits: true,
       creditsResetDate: true,
-      sentimentQuota: true,
-      sentimentUsed: true,
+      sentimentCredits: true,
       sentimentResetDate: true,
     },
   });
@@ -269,25 +268,24 @@ export async function refundCreditsAtomic(
 // ============================================
 
 /**
- * Check if user has sentiment quota available
+ * Check if user has sentiment credits available
  */
-export async function hasSentimentQuota(userId: string) {
+export async function hasSentimentCredits(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      sentimentUsed: true,
-      sentimentQuota: true,
+      sentimentCredits: true,
     },
   });
 
   if (!user) return false;
-  return user.sentimentUsed < user.sentimentQuota;
+  return user.sentimentCredits > 0;
 }
 
 /**
- * Increment sentiment usage with audit trail
+ * Deduct sentiment credits with audit trail
  */
-export async function incrementSentimentUsage(
+export async function deductSentimentCredits(
   userId: string,
   reviewId: string,
   sentiment: string,
@@ -295,12 +293,12 @@ export async function incrementSentimentUsage(
 ) {
   try {
     return await prisma.$transaction(async (tx) => {
-      // Check quota
+      // Check credits
       const user = await tx.user.findUnique({
         where: { id: userId },
         select: {
-          sentimentUsed: true,
-          sentimentQuota: true,
+          sentimentCredits: true,
+          tier: true,
         },
       });
 
@@ -308,19 +306,19 @@ export async function incrementSentimentUsage(
         throw new Error("USER_NOT_FOUND");
       }
 
-      if (user.sentimentUsed >= user.sentimentQuota) {
-        throw new Error("SENTIMENT_QUOTA_EXCEEDED");
+      if (user.sentimentCredits <= 0) {
+        throw new Error("INSUFFICIENT_SENTIMENT_CREDITS");
       }
 
-      // Increment usage
+      // Decrement credits
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
-          sentimentUsed: { increment: 1 },
+          sentimentCredits: { decrement: 1 },
         },
         select: {
-          sentimentUsed: true,
-          sentimentQuota: true,
+          sentimentCredits: true,
+          tier: true,
         },
       });
 
@@ -336,8 +334,7 @@ export async function incrementSentimentUsage(
 
       return {
         success: true,
-        sentimentUsed: updatedUser.sentimentUsed,
-        sentimentQuota: updatedUser.sentimentQuota,
+        sentimentCredits: updatedUser.sentimentCredits,
       };
     });
   } catch (error) {
@@ -393,8 +390,7 @@ export async function resetUserCredits(userId: string) {
     data: {
       credits: limits.credits,
       creditsResetDate: nextResetDate,
-      sentimentUsed: 0,
-      sentimentQuota: limits.sentiment,
+      sentimentCredits: limits.sentiment,
       sentimentResetDate: nextResetDate,
     },
   });
@@ -407,7 +403,7 @@ export async function resetUserCredits(userId: string) {
  * Logic:
  * - Find users where creditsResetDate < now
  * - Reset credits to tier default
- * - Reset sentimentUsed to 0
+ * - Reset sentimentCredits to tier default
  * - Update reset dates to 30 days from their current reset date (anniversary-based)
  * - Log operations for audit
  *
@@ -437,7 +433,7 @@ export async function resetMonthlyCredits(): Promise<{
         email: true,
         tier: true,
         credits: true,
-        sentimentUsed: true,
+        sentimentCredits: true,
         creditsResetDate: true,
       },
     });
@@ -465,8 +461,7 @@ export async function resetMonthlyCredits(): Promise<{
             data: {
               credits: limits.credits,
               creditsResetDate: nextResetDate,
-              sentimentUsed: 0,
-              sentimentQuota: limits.sentiment,
+              sentimentCredits: limits.sentiment,
               sentimentResetDate: nextResetDate,
             },
           });
@@ -481,7 +476,8 @@ export async function resetMonthlyCredits(): Promise<{
               details: JSON.stringify({
                 previousCredits: user.credits,
                 newCredits: limits.credits,
-                previousSentimentUsed: user.sentimentUsed,
+                previousSentimentCredits: user.sentimentCredits,
+                newSentimentCredits: limits.sentiment,
                 tier: user.tier,
                 resetDate: now.toISOString(),
                 nextResetDate: nextResetDate.toISOString(),

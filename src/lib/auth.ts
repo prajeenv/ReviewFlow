@@ -183,8 +183,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           data: {
             credits: 15,
             tier: "FREE",
-            sentimentQuota: 35,
-            sentimentUsed: 0,
+            sentimentCredits: 35,
             creditsResetDate: resetDate,
             sentimentResetDate: resetDate,
           },

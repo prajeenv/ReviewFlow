@@ -180,8 +180,7 @@ export const userPublicSelect = {
   tier: true,
   credits: true,
   creditsResetDate: true,
-  sentimentQuota: true,
-  sentimentUsed: true,
+  sentimentCredits: true,
   sentimentResetDate: true,
   createdAt: true,
 } as const;
@@ -198,8 +197,7 @@ export type UserPublic = Pick<
   | "tier"
   | "credits"
   | "creditsResetDate"
-  | "sentimentQuota"
-  | "sentimentUsed"
+  | "sentimentCredits"
   | "sentimentResetDate"
   | "createdAt"
 >;
