@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TIER_LIMITS } from "@/lib/constants";
 
 export default function HomePage() {
   return (
@@ -158,7 +159,7 @@ export default function HomePage() {
             <div className="flex flex-col rounded-lg border bg-background p-6">
               <h3 className="text-lg font-bold">Free</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold">$0</span>
+                <span className="text-4xl font-bold">${TIER_LIMITS.FREE.price}</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <ul className="mt-6 space-y-3 text-sm">
@@ -174,7 +175,7 @@ export default function HomePage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  5 responses/month
+                  {TIER_LIMITS.FREE.credits} responses/month
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -188,7 +189,7 @@ export default function HomePage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  10 sentiment analyses
+                  {TIER_LIMITS.FREE.sentimentQuota} sentiment analyses
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -213,7 +214,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-lg font-bold">Starter</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold">$29</span>
+                <span className="text-4xl font-bold">${TIER_LIMITS.STARTER.price}</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <ul className="mt-6 space-y-3 text-sm">
@@ -229,7 +230,7 @@ export default function HomePage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  50 responses/month
+                  {TIER_LIMITS.STARTER.credits} responses/month
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -243,7 +244,7 @@ export default function HomePage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  100 sentiment analyses
+                  {TIER_LIMITS.STARTER.sentimentQuota} sentiment analyses
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -265,7 +266,7 @@ export default function HomePage() {
             <div className="flex flex-col rounded-lg border bg-background p-6">
               <h3 className="text-lg font-bold">Growth</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold">$79</span>
+                <span className="text-4xl font-bold">${TIER_LIMITS.GROWTH.price}</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <ul className="mt-6 space-y-3 text-sm">
@@ -281,7 +282,7 @@ export default function HomePage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  200 responses/month
+                  {TIER_LIMITS.GROWTH.credits} responses/month
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -295,7 +296,7 @@ export default function HomePage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  500 sentiment analyses
+                  {TIER_LIMITS.GROWTH.sentimentQuota} sentiment analyses
                 </li>
                 <li className="flex items-center gap-2">
                   <svg

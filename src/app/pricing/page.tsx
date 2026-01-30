@@ -34,8 +34,8 @@ const plans: Plan[] = [
     credits: TIER_LIMITS.FREE.credits,
     sentimentQuota: TIER_LIMITS.FREE.sentimentQuota,
     features: [
-      { text: "15 AI responses per month", included: true },
-      { text: "35 sentiment analyses per month", included: true },
+      { text: `${TIER_LIMITS.FREE.credits} AI responses per month`, included: true },
+      { text: `${TIER_LIMITS.FREE.sentimentQuota} sentiment analyses per month`, included: true },
       { text: "Basic brand voice customization", included: true },
       { text: "Multi-language support (40+ languages)", included: true },
       { text: "Email support", included: false },
@@ -51,8 +51,8 @@ const plans: Plan[] = [
     sentimentQuota: TIER_LIMITS.STARTER.sentimentQuota,
     popular: true,
     features: [
-      { text: "60 AI responses per month", included: true },
-      { text: "150 sentiment analyses per month", included: true },
+      { text: `${TIER_LIMITS.STARTER.credits} AI responses per month`, included: true },
+      { text: `${TIER_LIMITS.STARTER.sentimentQuota} sentiment analyses per month`, included: true },
       { text: "Advanced brand voice customization", included: true },
       { text: "Multi-language support (40+ languages)", included: true },
       { text: "Email support", included: true },
@@ -67,8 +67,8 @@ const plans: Plan[] = [
     credits: TIER_LIMITS.GROWTH.credits,
     sentimentQuota: TIER_LIMITS.GROWTH.sentimentQuota,
     features: [
-      { text: "200 AI responses per month", included: true },
-      { text: "500 sentiment analyses per month", included: true },
+      { text: `${TIER_LIMITS.GROWTH.credits} AI responses per month`, included: true },
+      { text: `${TIER_LIMITS.GROWTH.sentimentQuota} sentiment analyses per month`, included: true },
       { text: "Advanced brand voice customization", included: true },
       { text: "Multi-language support (40+ languages)", included: true },
       { text: "Priority email support", included: true },
