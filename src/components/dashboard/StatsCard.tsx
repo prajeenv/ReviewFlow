@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, getNextResetDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -230,18 +230,8 @@ export function QuotaCard({
   const isLow = percentage >= 80;
   const isEmpty = remaining <= 0;
 
-  // Calculate next reset date (creditsResetDate + 30 days)
-  // creditsResetDate stores the last reset date, so next reset is always +30 days
-  const getNextResetDate = () => {
-    if (!resetDate) return null;
-
-    const storedDate = new Date(resetDate);
-    const nextReset = new Date(storedDate);
-    nextReset.setUTCDate(nextReset.getUTCDate() + 30);
-    return nextReset;
-  };
-
-  const nextResetDate = getNextResetDate();
+  const resetDateStr = resetDate instanceof Date ? resetDate.toISOString() : resetDate;
+  const nextResetDate = getNextResetDate(resetDateStr);
   const formattedResetDate = nextResetDate
     ? nextResetDate.toLocaleDateString("en-US", {
         month: "short",

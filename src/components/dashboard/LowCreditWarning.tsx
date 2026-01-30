@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowRight, X } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { getNextResetDate } from "@/lib/utils";
 
 interface LowCreditWarningProps {
   creditsRemaining: number;
@@ -28,18 +29,7 @@ export function LowCreditWarning({
 
   const isOutOfCredits = creditsRemaining === 0;
 
-  // Calculate next reset date (creditsResetDate + 30 days)
-  // creditsResetDate stores the last reset date, so next reset is always +30 days
-  const getNextResetDate = () => {
-    if (!resetDate) return null;
-
-    const storedDate = new Date(resetDate);
-    const nextReset = new Date(storedDate);
-    nextReset.setUTCDate(nextReset.getUTCDate() + 30);
-    return nextReset;
-  };
-
-  const nextResetDate = getNextResetDate();
+  const nextResetDate = getNextResetDate(resetDate);
   const formattedResetDate = nextResetDate
     ? nextResetDate.toLocaleDateString("en-US", {
         month: "short",

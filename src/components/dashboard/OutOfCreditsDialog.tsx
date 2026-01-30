@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { getNextResetDate } from "@/lib/utils";
 
 interface OutOfCreditsDialogProps {
   open: boolean;
@@ -29,8 +30,9 @@ export function OutOfCreditsDialog({
   resetDate,
   actionType = "generate",
 }: OutOfCreditsDialogProps) {
-  const formattedResetDate = resetDate
-    ? new Date(resetDate).toLocaleDateString("en-US", {
+  const nextResetDate = getNextResetDate(resetDate);
+  const formattedResetDate = nextResetDate
+    ? nextResetDate.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",

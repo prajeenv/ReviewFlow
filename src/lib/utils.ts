@@ -92,3 +92,17 @@ export function calculatePercentage(used: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((used / total) * 100);
 }
+
+/**
+ * Calculate the next reset date from the stored reset date.
+ * The database stores creditsResetDate as the last/current reset date,
+ * so we add 30 days to get the next reset date (anniversary-based billing).
+ */
+export function getNextResetDate(resetDate: string | null | undefined): Date | null {
+  if (!resetDate) return null;
+
+  const storedDate = new Date(resetDate);
+  const nextReset = new Date(storedDate);
+  nextReset.setUTCDate(nextReset.getUTCDate() + 30);
+  return nextReset;
+}
