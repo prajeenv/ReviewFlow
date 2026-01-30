@@ -22,6 +22,7 @@ import { ToneModifier } from "./ToneModifier";
 import { ResponseVersionHistory } from "./ResponseVersionHistory";
 import { CREDIT_COSTS } from "@/lib/constants";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { OutOfCreditsDialog } from "@/components/dashboard";
 
 interface ResponseVersion {
   id: string;
@@ -97,11 +98,13 @@ export function ResponsePanel({
   textDirection = "ltr",
   onResponseUpdate,
 }: ResponsePanelProps) {
-  const { refreshCredits } = useCredits();
+  const { credits, creditsTotal, creditsResetDate, refreshCredits } = useCredits();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [localResponse, setLocalResponse] = useState<Response | null>(response);
   const [isResponseExpanded, setIsResponseExpanded] = useState(false);
+  const [showOutOfCreditsDialog, setShowOutOfCreditsDialog] = useState(false);
+  const [outOfCreditsActionType, setOutOfCreditsActionType] = useState<"generate" | "regenerate">("generate");
 
   // Update local response when prop changes
   if (response?.responseText !== localResponse?.responseText && !isEditing) {
@@ -181,7 +184,12 @@ export function ResponsePanel({
         refreshCredits();
         onResponseUpdate?.(); // This will fetch fresh data including the new version
       } else {
-        toast.error(result.error?.message || "Failed to regenerate response");
+        if (result.error?.code === "INSUFFICIENT_CREDITS") {
+          setOutOfCreditsActionType("regenerate");
+          setShowOutOfCreditsDialog(true);
+        } else {
+          toast.error(result.error?.message || "Failed to regenerate response");
+        }
       }
     } catch {
       toast.error("Something went wrong");
@@ -253,9 +261,8 @@ export function ResponsePanel({
         onResponseUpdate?.();
       } else {
         if (result.error?.code === "INSUFFICIENT_CREDITS") {
-          toast.error(
-            `Not enough credits. You have ${result.error.details?.creditsAvailable || 0} credits remaining.`
-          );
+          setOutOfCreditsActionType("generate");
+          setShowOutOfCreditsDialog(true);
         } else if (result.error?.code === "AI_SERVICE_UNAVAILABLE") {
           toast.error("AI service is temporarily unavailable. Please try again.");
         } else {
@@ -272,42 +279,53 @@ export function ResponsePanel({
   // Empty state - no response
   if (!localResponse) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            AI Response
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Sparkles className="mx-auto h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">
-              No response generated yet.
-            </p>
-            <Button
-              className="mt-4"
-              onClick={handleGenerate}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Generate Response
-                </>
-              )}
-            </Button>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Uses {CREDIT_COSTS.GENERATE_RESPONSE} credit
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              AI Response
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Sparkles className="mx-auto h-12 w-12 text-muted-foreground" />
+              <p className="mt-4 text-muted-foreground">
+                No response generated yet.
+              </p>
+              <Button
+                className="mt-4"
+                onClick={handleGenerate}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate Response
+                  </>
+                )}
+              </Button>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Uses {CREDIT_COSTS.GENERATE_RESPONSE} credit
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <OutOfCreditsDialog
+          open={showOutOfCreditsDialog}
+          onOpenChange={setShowOutOfCreditsDialog}
+          creditsRemaining={credits}
+          creditsTotal={creditsTotal}
+          resetDate={creditsResetDate ?? undefined}
+          actionType={outOfCreditsActionType}
+        />
+      </>
     );
   }
 
@@ -454,6 +472,15 @@ export function ResponsePanel({
           </>
         )}
       </CardContent>
+
+      <OutOfCreditsDialog
+        open={showOutOfCreditsDialog}
+        onOpenChange={setShowOutOfCreditsDialog}
+        creditsRemaining={credits}
+        creditsTotal={creditsTotal}
+        resetDate={creditsResetDate ?? undefined}
+        actionType={outOfCreditsActionType}
+      />
     </Card>
   );
 }

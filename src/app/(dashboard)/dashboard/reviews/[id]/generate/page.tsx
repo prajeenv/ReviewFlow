@@ -24,6 +24,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getTextDirection } from "@/lib/language-detection";
 import { CREDIT_COSTS } from "@/lib/constants";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { OutOfCreditsDialog } from "@/components/dashboard";
 
 interface Review {
   id: string;
@@ -82,7 +83,8 @@ export default function GenerateResponsePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedResponse, setGeneratedResponse] = useState<GeneratedResponse | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
-  const { refreshCredits } = useCredits();
+  const [showOutOfCreditsDialog, setShowOutOfCreditsDialog] = useState(false);
+  const { credits, creditsTotal, creditsResetDate, refreshCredits } = useCredits();
   const [error, setError] = useState<string | null>(null);
 
   // Fetch review
@@ -143,9 +145,7 @@ export default function GenerateResponsePage() {
         refreshCredits();
       } else {
         if (result.error?.code === "INSUFFICIENT_CREDITS") {
-          setError(
-            `Not enough credits. You have ${result.error.details?.creditsAvailable || 0} credits, but need ${CREDIT_COSTS.GENERATE_RESPONSE}.`
-          );
+          setShowOutOfCreditsDialog(true);
         } else if (result.error?.code === "AI_SERVICE_UNAVAILABLE") {
           setError("AI service is temporarily unavailable. Please try again in a moment.");
         } else {
@@ -373,6 +373,16 @@ export default function GenerateResponsePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Out of credits dialog */}
+      <OutOfCreditsDialog
+        open={showOutOfCreditsDialog}
+        onOpenChange={setShowOutOfCreditsDialog}
+        creditsRemaining={credits}
+        creditsTotal={creditsTotal}
+        resetDate={creditsResetDate ?? undefined}
+        actionType="generate"
+      />
     </div>
   );
 }

@@ -785,6 +785,13 @@ Test the brand voice test panel with different review texts and tones
 - Modified 10 files: schema, db-utils, auth, signup, 4 API routes, types, test script
 - Database migration SQL provided in DECISIONS.md
 
+**Post-Prompt 9 Enhancement (January 30, 2026):**
+- Added `OutOfCreditsDialog` component for better UX when user has no credits
+- Replaced vanishing toast errors with persistent modal dialog
+- Shows credits remaining, reset date, and upgrade CTA
+- Integrated in ResponsePanel, review detail page, and generate page
+- Extended `CreditsProvider` to include `creditsTotal` and `creditsResetDate`
+
 ---
 
 ### ⏳ Prompt 10: Testing, Deployment & Finalization

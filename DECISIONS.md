@@ -642,6 +642,38 @@ async function resetMonthlyCredits(): Promise<{
 - All operations logged in CreditUsage table
 - No credits deducted if AI generation fails
 
+### 4. UX Enhancement: OutOfCreditsDialog (January 30, 2026)
+
+**What:** Replaced vanishing toast error with persistent modal dialog when user has insufficient credits
+**Why:** Better UX - toast messages vanish quickly and don't provide actionable next steps
+**Risk Level:** Low ✅
+
+**Before:** `toast.error("Not enough credits. You have 0 credits remaining.")`
+
+**After:** Modal dialog with:
+- Clear title: "You're out of response credits"
+- Context-aware message (generate vs regenerate)
+- Credits status: "0 of 15" remaining
+- Reset date: "Credits refresh on [date]"
+- Primary CTA: "Upgrade Plan" → /pricing
+- Secondary: "Close" button
+
+**Component:** `OutOfCreditsDialog` in `src/components/dashboard/`
+
+**Files Modified:**
+- `src/components/dashboard/OutOfCreditsDialog.tsx` - New component
+- `src/components/dashboard/index.ts` - Export added
+- `src/components/providers/CreditsProvider.tsx` - Added creditsTotal, creditsResetDate to context
+- `src/components/reviews/ResponsePanel.tsx` - Integrated dialog for generate/regenerate
+- `src/app/(dashboard)/dashboard/reviews/[id]/page.tsx` - Integrated dialog
+- `src/app/(dashboard)/dashboard/reviews/[id]/generate/page.tsx` - Integrated dialog
+
+**Benefits:**
+1. **Persistent feedback**: User can't miss the message
+2. **Actionable CTA**: Direct path to upgrade
+3. **Context**: Shows when credits reset for users who want to wait
+4. **Consistent UX**: Same dialog across all generation points
+
 ---
 
 ## Prompt 10: Testing & Deployment

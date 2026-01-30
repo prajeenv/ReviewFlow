@@ -38,6 +38,7 @@ import {
 import { getTextDirection } from "@/lib/language-detection";
 import { ResponsePanel } from "@/components/reviews/ResponsePanel";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { OutOfCreditsDialog } from "@/components/dashboard";
 import { CREDIT_COSTS } from "@/lib/constants";
 
 interface ReviewDetail {
@@ -137,7 +138,8 @@ export default function ReviewDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isReviewExpanded, setIsReviewExpanded] = useState(false);
-  const { refreshCredits } = useCredits();
+  const [showOutOfCreditsDialog, setShowOutOfCreditsDialog] = useState(false);
+  const { credits, creditsTotal, creditsResetDate, refreshCredits } = useCredits();
 
   useEffect(() => {
     async function fetchReview() {
@@ -208,9 +210,7 @@ export default function ReviewDetailPage() {
         refreshCredits();
       } else {
         if (result.error?.code === "INSUFFICIENT_CREDITS") {
-          toast.error(
-            `Not enough credits. You have ${result.error.details?.creditsAvailable || 0} credits remaining.`
-          );
+          setShowOutOfCreditsDialog(true);
         } else if (result.error?.code === "AI_SERVICE_UNAVAILABLE") {
           toast.error("AI service is temporarily unavailable. Please try again.");
         } else {
@@ -447,6 +447,16 @@ export default function ReviewDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Out of credits dialog */}
+      <OutOfCreditsDialog
+        open={showOutOfCreditsDialog}
+        onOpenChange={setShowOutOfCreditsDialog}
+        creditsRemaining={credits}
+        creditsTotal={creditsTotal}
+        resetDate={creditsResetDate ?? undefined}
+        actionType="generate"
+      />
     </div>
   );
 }
