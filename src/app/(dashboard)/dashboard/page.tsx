@@ -147,6 +147,9 @@ export default function DashboardPage() {
           creditsTotal={stats.credits.total}
           tier={stats.tier}
           resetDate={stats.credits.resetDate}
+          sentimentRemaining={stats.sentiment.remaining}
+          sentimentTotal={stats.sentiment.total}
+          sentimentResetDate={stats.sentiment.resetDate}
         />
       )}
 

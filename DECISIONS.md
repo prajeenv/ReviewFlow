@@ -720,6 +720,63 @@ import { TIER_LIMITS } from "@/lib/constants";
 
 ---
 
+### 6. Unified Credit Warning Banner (January 30, 2026)
+
+**What:** Extended `LowCreditWarning` component to handle both response credits AND sentiment credits in a single unified banner
+**Why:** Users need visibility into sentiment credit depletion; stacked banners create alert fatigue
+**Risk Level:** Low ✅
+
+**Problem:**
+- Original `LowCreditWarning` only showed warnings for response credits
+- No visibility when sentiment analysis credits were low or exhausted
+- Potential for multiple stacked banners if implemented separately
+
+**Solution:** Single unified banner with priority-based logic:
+
+**Priority Matrix:**
+| Response | Sentiment | Color | Title |
+|----------|-----------|-------|-------|
+| OK (≥3) | OK (≥3) | - | No banner |
+| OK | Low (1-2) | Yellow | "Running Low on Sentiment Credits" |
+| Low (1-2) | OK | Yellow | "Running Low on Response Credits" |
+| OK | 0 | Yellow | "Out of Sentiment Credits" |
+| Low (1-2) | Low (1-2) | Yellow | "Running Low on Credits" |
+| 0 | OK | Red | "Out of Response Credits" |
+| Low (1-2) | 0 | Red | "Out of Sentiment Credits" + response note |
+| 0 | Low (1-2) | Red | "Out of Response Credits" + sentiment note |
+| 0 | 0 | Red | "Out of Credits" |
+
+**Color Logic:**
+- **Red** = Response credits exhausted (0) - blocks core functionality
+- **Yellow** = All other warning states
+
+**Implementation:**
+```typescript
+type WarningType =
+  | "none" | "response_low" | "response_out"
+  | "sentiment_low" | "sentiment_out" | "both_low"
+  | "response_out_sentiment_low" | "response_low_sentiment_out" | "both_out";
+
+function getWarningState(responseCredits: number, sentimentCredits: number | undefined):
+  { type: WarningType; isRed: boolean }
+```
+
+**Files Modified:**
+- `src/components/dashboard/LowCreditWarning.tsx` - Extended props, added warning state logic
+- `src/app/(dashboard)/dashboard/page.tsx` - Pass sentiment props to component
+
+**Backward Compatibility:**
+- Sentiment props are optional (`sentimentRemaining?`, `sentimentTotal?`, `sentimentResetDate?`)
+- If not provided, component behaves exactly as before (response-only)
+
+**Benefits:**
+1. **Single unified banner**: No alert fatigue from stacked banners
+2. **Priority-based display**: Response credits take precedence (blocks core functionality)
+3. **Combined states**: Users see full picture when both credit types are low
+4. **Earlier reset date**: When both types have issues, shows the earlier reset date
+
+---
+
 ## Prompt 10: Testing & Deployment
 
 *Decisions to be added after completing Prompt 10*
@@ -885,6 +942,7 @@ import { TIER_LIMITS } from "@/lib/constants";
 - Extracted `getNextResetDate()` utility function to shared `src/lib/utils.ts`
 - Refactored pricing pages to use `TIER_LIMITS` constants (single source of truth)
 - Updated tier limits: STARTER 60→30 credits, GROWTH 200→100 credits
+- Extended LowCreditWarning to unified banner handling both response and sentiment credits
 
 **January 19, 2026 (Prompt 9)**
 - Implemented credit system management features:
@@ -934,4 +992,4 @@ import { TIER_LIMITS } from "@/lib/constants";
 
 **Note:** This document should be updated after each prompt execution. When in doubt about whether something is a "decision," document it - better to over-document than under-document.
 
-**Last Reviewed:** January 30, 2026 (Tier limits single source of truth)
+**Last Reviewed:** January 30, 2026 (Unified credit warning banner)

@@ -522,3 +522,36 @@ const PLATFORMS = [
 // Sentiments
 const SENTIMENTS = ["positive", "neutral", "negative"];
 ```
+
+---
+
+## UI Patterns
+
+### Credit Warning Banner
+
+The dashboard displays a unified warning banner when either response credits or sentiment credits are low (< 3) or exhausted (0).
+
+**Priority Matrix:**
+| Response Credits | Sentiment Credits | Banner Color | Title |
+|------------------|-------------------|--------------|-------|
+| OK (≥3) | OK (≥3) | None | No banner shown |
+| OK | Low (1-2) | Yellow | "Running Low on Sentiment Credits" |
+| Low (1-2) | OK | Yellow | "Running Low on Response Credits" |
+| OK | 0 | Yellow | "Out of Sentiment Credits" |
+| Low (1-2) | Low (1-2) | Yellow | "Running Low on Credits" |
+| 0 | OK | Red | "Out of Response Credits" |
+| Low (1-2) | 0 | Red | "Out of Sentiment Credits" |
+| 0 | Low (1-2) | Red | "Out of Response Credits" |
+| 0 | 0 | Red | "Out of Credits" |
+
+**Color Logic:**
+- **Red (Critical):** Response credits = 0 (blocks core response generation)
+- **Yellow (Warning):** All other low/exhausted states
+
+**Component:** `LowCreditWarning` in `src/components/dashboard/`
+
+**Behavior:**
+- Single unified banner (no stacking)
+- Dismissible (state resets on page reload)
+- Shows earlier reset date when both credit types have issues
+- "Upgrade Plan" CTA links to /pricing
