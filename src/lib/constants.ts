@@ -103,13 +103,13 @@ export const TIER_LIMITS: Record<
     name: "Free",
   },
   STARTER: {
-    credits: 60,
+    credits: 30,
     sentimentQuota: 150,
     price: 29,
     name: "Starter",
   },
   GROWTH: {
-    credits: 200,
+    credits: 100,
     sentimentQuota: 500,
     price: 79,
     name: "Growth",

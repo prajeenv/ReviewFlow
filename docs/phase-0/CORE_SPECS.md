@@ -21,11 +21,11 @@ Reviews added → AI generates response in same language → User edits (optiona
 
 ## Pricing Tiers
 
-| Tier | Price | Credits | Sentiment Quota |
-|------|-------|---------|-----------------|
-| FREE | $0 | 15/month | 35/month |
-| STARTER | $29/month | 60/month | 150/month |
-| GROWTH | $79/month | 200/month | 500/month |
+| Tier    | Price     | Credits   | Sentiment Quota |
+| ------- | --------- | --------- | --------------- |
+| FREE    | $0        | 15/month  | 35/month        |
+| STARTER | $29/month | 30/month  | 150/month       |
+| GROWTH  | $79/month | 100/month | 500/month       |
 
 **Credit Costs:**
 - Response generation: 1.0 credits
@@ -497,8 +497,8 @@ GET    /sentiment/usage       → Get sentiment quota usage
 // Tier limits
 const TIER_LIMITS = {
   FREE: { credits: 15, sentiment: 35 },
-  STARTER: { credits: 60, sentiment: 150 },
-  GROWTH: { credits: 200, sentiment: 500 }
+  STARTER: { credits: 30, sentiment: 150 },
+  GROWTH: { credits: 100, sentiment: 500 }
 };
 
 // Credit costs
