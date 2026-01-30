@@ -66,7 +66,7 @@ export function OutOfCreditsDialog({
             <div className="flex items-center justify-between rounded-lg border p-3">
               <span className="text-sm text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Credits refresh on
+                Resets on
               </span>
               <span className="font-semibold">{formattedResetDate}</span>
             </div>
