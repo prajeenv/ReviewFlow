@@ -642,7 +642,51 @@ async function resetMonthlyCredits(): Promise<{
 - All operations logged in CreditUsage table
 - No credits deducted if AI generation fails
 
-### 4. UX Enhancement: OutOfCreditsDialog (January 30, 2026)
+### 4. Single Source of Truth for Tier Limits (January 30, 2026)
+
+**What:** Refactored pricing display to use `TIER_LIMITS` constants instead of hardcoded values
+**Why:** Tier credit limits change frequently; hardcoded values in multiple places led to inconsistencies
+**Risk Level:** Low ✅
+
+**Problem:**
+- `src/lib/constants.ts` had the canonical tier limits
+- Landing page (`src/app/page.tsx`) had different hardcoded values
+- Pricing page (`src/app/pricing/page.tsx`) had different hardcoded values in feature text
+- Changing tier limits required updating 3+ files manually
+
+**Solution:**
+Both pages now import and use `TIER_LIMITS` from constants:
+```typescript
+import { TIER_LIMITS } from "@/lib/constants";
+
+// Landing page
+{TIER_LIMITS.STARTER.credits} responses/month
+{TIER_LIMITS.STARTER.sentimentQuota} sentiment analyses
+
+// Pricing page features
+{ text: `${TIER_LIMITS.STARTER.credits} AI responses per month`, included: true }
+```
+
+**Files Modified:**
+- `src/app/page.tsx` - Added import, replaced hardcoded values with TIER_LIMITS references
+- `src/app/pricing/page.tsx` - Replaced hardcoded feature text with template literals using TIER_LIMITS
+
+**Benefits:**
+1. **Single source of truth**: All tier information comes from `src/lib/constants.ts`
+2. **Easy updates**: Change values in one file, all pages automatically reflect the change
+3. **Consistency**: No more mismatched values between pages
+4. **Documentation**: `CORE_SPECS.md` and code constants stay in sync
+
+**Current Tier Limits (as of January 30, 2026):**
+| Tier | Credits | Sentiment | Price |
+|------|---------|-----------|-------|
+| FREE | 15 | 35 | $0 |
+| STARTER | 30 | 150 | $29 |
+| GROWTH | 100 | 500 | $79 |
+
+---
+
+### 5. UX Enhancement: OutOfCreditsDialog (January 30, 2026)
 
 **What:** Replaced vanishing toast error with persistent modal dialog when user has insufficient credits
 **Why:** Better UX - toast messages vanish quickly and don't provide actionable next steps
@@ -835,6 +879,13 @@ async function resetMonthlyCredits(): Promise<{
 
 ## Change Log
 
+**January 30, 2026**
+- Added OutOfCreditsDialog for better UX when user has no credits
+- Standardized reset date language across components ("Resets on" instead of "Credits refresh on")
+- Extracted `getNextResetDate()` utility function to shared `src/lib/utils.ts`
+- Refactored pricing pages to use `TIER_LIMITS` constants (single source of truth)
+- Updated tier limits: STARTER 60→30 credits, GROWTH 200→100 credits
+
 **January 19, 2026 (Prompt 9)**
 - Implemented credit system management features:
   - GET /api/credits endpoint for credit balance
@@ -883,4 +934,4 @@ async function resetMonthlyCredits(): Promise<{
 
 **Note:** This document should be updated after each prompt execution. When in doubt about whether something is a "decision," document it - better to over-document than under-document.
 
-**Last Reviewed:** January 20, 2026 (Sentiment credits standardization)
+**Last Reviewed:** January 30, 2026 (Tier limits single source of truth)
