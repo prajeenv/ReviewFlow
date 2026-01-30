@@ -7,7 +7,7 @@ import { BrandVoiceForm } from "@/components/settings";
 
 export default function BrandVoiceSettingsPage() {
   return (
-    <div className="container max-w-4xl py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/dashboard/settings">
