@@ -297,6 +297,7 @@ export function ReviewForm({ initialData, mode = "create" }: ReviewFormProps) {
             <Input
               id="reviewDate"
               type="date"
+              max={new Date().toISOString().split("T")[0]}
               {...register("reviewDate")}
             />
           </div>
