@@ -329,7 +329,7 @@ export default function ReviewDetailPage() {
                       <span className="inline-flex">
                         <Badge
                           variant="outline"
-                          className="text-muted-foreground cursor-help"
+                          className="text-muted-foreground"
                         >
                           Sentiment
                           <AlertCircle className="ml-1 h-3 w-3" />

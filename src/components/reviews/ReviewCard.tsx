@@ -209,7 +209,7 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
                           <span className="inline-flex">
                             <Badge
                               variant="outline"
-                              className="text-xs text-muted-foreground cursor-help"
+                              className="text-xs text-muted-foreground"
                             >
                               Sentiment
                               <AlertCircle className="ml-1 h-3 w-3" />
