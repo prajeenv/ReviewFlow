@@ -206,13 +206,15 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
                     <TooltipProvider delayDuration={200}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Badge
-                            variant="outline"
-                            className="text-xs text-muted-foreground cursor-help"
-                          >
-                            Sentiment
-                            <AlertCircle className="ml-1 h-3 w-3" />
-                          </Badge>
+                          <span className="inline-flex">
+                            <Badge
+                              variant="outline"
+                              className="text-xs text-muted-foreground cursor-help"
+                            >
+                              Sentiment
+                              <AlertCircle className="ml-1 h-3 w-3" />
+                            </Badge>
+                          </span>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Sentiment analysis skipped - no credits</p>
