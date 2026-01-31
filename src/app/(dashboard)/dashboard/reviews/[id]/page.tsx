@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -16,10 +16,14 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  AlertCircle,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -130,6 +134,7 @@ function truncateToLines(text: string, maxLines: number): string {
 export default function ReviewDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
 
   const [review, setReview] = useState<ReviewDetail | null>(null);
@@ -139,6 +144,9 @@ export default function ReviewDetailPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isReviewExpanded, setIsReviewExpanded] = useState(false);
   const [showOutOfCreditsDialog, setShowOutOfCreditsDialog] = useState(false);
+  const [showSentimentAlert, setShowSentimentAlert] = useState(
+    searchParams.get("sentimentSkipped") === "true"
+  );
   const { credits, creditsTotal, creditsResetDate, refreshCredits } = useCredits();
 
   useEffect(() => {
@@ -261,6 +269,35 @@ export default function ReviewDetailPage() {
         </Link>
       </Button>
 
+      {/* Sentiment skipped alert */}
+      {showSentimentAlert && (
+        <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/50 relative">
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <AlertTitle className="text-yellow-800 dark:text-yellow-200">
+            Sentiment Analysis Skipped
+          </AlertTitle>
+          <AlertDescription className="text-yellow-700 dark:text-yellow-300">
+            <div className="flex items-center justify-between">
+              <span>
+                No sentiment credits remaining.{" "}
+                <Link href="/pricing" className="underline font-medium">
+                  Upgrade for more credits
+                </Link>
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 absolute top-2 right-2 opacity-70 hover:opacity-100"
+                onClick={() => setShowSentimentAlert(false)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Dismiss</span>
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Review card */}
       <Card>
         <CardHeader className="pb-3">
@@ -281,10 +318,24 @@ export default function ReviewDetailPage() {
                   ))}
                 </div>
               )}
-              {review.sentiment && (
+              {review.sentiment ? (
                 <Badge className={getSentimentColor(review.sentiment)}>
                   {review.sentiment}
                 </Badge>
+              ) : (
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1 text-sm text-muted-foreground cursor-help">
+                        Sentiment
+                        <AlertCircle className="h-4 w-4" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Sentiment analysis skipped - no credits</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               {review.detectedLanguage !== "English" && (
                 <Badge variant="outline">

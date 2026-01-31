@@ -555,3 +555,24 @@ The dashboard displays a unified warning banner when either response credits or 
 - Dismissible (state resets on page reload)
 - Shows earlier reset date when both credit types have issues
 - "Upgrade Plan" CTA links to /pricing
+
+### Sentiment Skipped Indicator
+
+When sentiment analysis is skipped (no credits), reviews display a visual indicator instead of hiding the sentiment badge.
+
+**Display States:**
+| State | Display |
+|-------|---------|
+| Has sentiment | Colored badge: `[positive]` / `[negative]` / `[neutral]` |
+| No sentiment | Muted text + icon: `Sentiment ⚠` with tooltip |
+
+**Tooltip:** "Sentiment analysis skipped - no credits"
+
+**Alert Banner (on add review):**
+- When adding a review with no sentiment credits, redirect includes `?sentimentSkipped=true`
+- Review detail page shows dismissible yellow alert: "Sentiment Analysis Skipped"
+- Includes "Upgrade for more credits" link
+
+**Components:**
+- `ReviewCard.tsx` - Shows indicator in review list
+- `reviews/[id]/page.tsx` - Shows indicator + alert banner

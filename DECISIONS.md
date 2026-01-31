@@ -777,6 +777,49 @@ function getWarningState(responseCredits: number, sentimentCredits: number | und
 
 ---
 
+### 7. Sentiment Skipped Indicator (January 31, 2026)
+
+**What:** Replaced vanishing toast with persistent inline alert + visual indicator when sentiment analysis is skipped
+**Why:** Toast messages disappear quickly; users need clear visibility into why sentiment is missing
+**Risk Level:** Low ✅
+
+**Problem:**
+- When adding a review with no sentiment credits, a toast message appeared briefly and vanished
+- Users could easily miss this important information
+- Reviews without sentiment showed nothing - no indication why sentiment was missing
+
+**Solution:** Two-part improvement:
+
+**Part 1: Inline Alert Banner on Review Detail Page**
+- Pass `?sentimentSkipped=true` URL parameter when redirecting after adding review
+- Show dismissible yellow alert banner: "Sentiment Analysis Skipped - No sentiment credits remaining"
+- Includes "Upgrade for more credits" link to /pricing
+
+**Part 2: "Sentiment ⚠" Indicator on Reviews**
+- When sentiment is null, show "Sentiment" text + AlertCircle icon (muted gray)
+- Tooltip on hover: "Sentiment analysis skipped - no credits"
+- Appears on both ReviewCard (list) and review detail page
+
+**Files Modified:**
+- `src/components/reviews/ReviewForm.tsx` - URL param instead of toast
+- `src/app/(dashboard)/dashboard/reviews/[id]/page.tsx` - Alert banner + sentiment indicator
+- `src/components/reviews/ReviewCard.tsx` - Sentiment indicator with tooltip
+
+**Visual:**
+```
+With sentiment:     ★★★★☆  Google  [positive]  Jan 15
+Without sentiment:  ★★★★☆  Google  Sentiment ⚠  Jan 15
+                                   └─ tooltip: "Sentiment analysis skipped - no credits"
+```
+
+**Benefits:**
+1. **Persistent feedback**: Yellow alert banner stays until dismissed
+2. **Actionable CTA**: Direct link to upgrade in alert banner
+3. **Transparent state**: Users understand why sentiment is missing on specific reviews
+4. **Consistent UX**: Same indicator pattern on cards and detail page
+
+---
+
 ## Prompt 10: Testing & Deployment
 
 *Decisions to be added after completing Prompt 10*
@@ -936,6 +979,11 @@ function getWarningState(responseCredits: number, sentimentCredits: number | und
 
 ## Change Log
 
+**January 31, 2026**
+- Added "Sentiment ⚠" indicator with tooltip for reviews without sentiment analysis
+- Replaced sentiment skipped toast with inline alert banner on review detail page
+- URL parameter `?sentimentSkipped=true` for persistent feedback after adding review
+
 **January 30, 2026**
 - Added OutOfCreditsDialog for better UX when user has no credits
 - Standardized reset date language across components ("Resets on" instead of "Credits refresh on")
@@ -992,4 +1040,4 @@ function getWarningState(responseCredits: number, sentimentCredits: number | und
 
 **Note:** This document should be updated after each prompt execution. When in doubt about whether something is a "decision," document it - better to over-document than under-document.
 
-**Last Reviewed:** January 30, 2026 (Unified credit warning banner)
+**Last Reviewed:** January 31, 2026 (Sentiment skipped indicator)

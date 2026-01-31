@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Coins,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +36,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getTextDirection } from "@/lib/language-detection";
 
 export interface ReviewCardData {
@@ -188,13 +195,27 @@ export function ReviewCard({ review, onDelete }: ReviewCardProps) {
                   <Badge variant="outline" className="text-xs">
                     {review.platform}
                   </Badge>
-                  {review.sentiment && (
+                  {review.sentiment ? (
                     <Badge
                       className={`text-xs ${getSentimentColor(review.sentiment)}`}
                       variant="secondary"
                     >
                       {review.sentiment}
                     </Badge>
+                  ) : (
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground cursor-help">
+                            Sentiment
+                            <AlertCircle className="h-3 w-3" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Sentiment analysis skipped - no credits</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                   {review.response && (
                     <Badge variant="secondary" className="text-xs">

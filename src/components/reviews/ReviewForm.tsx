@@ -119,11 +119,11 @@ export function ReviewForm({ initialData, mode = "create" }: ReviewFormProps) {
       if (result.success) {
         toast.success(mode === "edit" ? "Review updated!" : "Review added successfully!");
 
-        if (result.data?.sentimentWarning) {
-          toast.warning(result.data.sentimentWarning);
-        }
-
-        router.push(`/dashboard/reviews/${result.data.review.id}`);
+        // Pass sentimentSkipped param if sentiment was skipped due to no credits
+        const reviewUrl = result.data?.sentimentWarning
+          ? `/dashboard/reviews/${result.data.review.id}?sentimentSkipped=true`
+          : `/dashboard/reviews/${result.data.review.id}`;
+        router.push(reviewUrl);
         router.refresh();
       } else {
         toast.error(result.error?.message || "Failed to save review");
