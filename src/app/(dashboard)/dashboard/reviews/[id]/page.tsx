@@ -6,6 +6,7 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  ArrowRight,
   Star,
   Globe,
   Clock,
@@ -277,24 +278,32 @@ export default function ReviewDetailPage() {
             Sentiment Analysis Skipped
           </AlertTitle>
           <AlertDescription className="text-yellow-700 dark:text-yellow-300">
-            <div className="flex items-center justify-between">
-              <span>
-                No sentiment credits remaining.{" "}
-                <Link href="/pricing" className="underline font-medium">
-                  Upgrade for more credits
-                </Link>
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 absolute top-2 right-2 opacity-70 hover:opacity-100"
-                onClick={() => setShowSentimentAlert(false)}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Dismiss</span>
-              </Button>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <span>No sentiment credits remaining.</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  asChild
+                  className="border-yellow-600 text-yellow-800 hover:bg-yellow-100 dark:border-yellow-400 dark:text-yellow-200 dark:hover:bg-yellow-950"
+                >
+                  <Link href="/pricing">
+                    Upgrade Plan
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </AlertDescription>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 absolute top-2 right-2 opacity-70 hover:opacity-100"
+            onClick={() => setShowSentimentAlert(false)}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Dismiss</span>
+          </Button>
         </Alert>
       )}
 
