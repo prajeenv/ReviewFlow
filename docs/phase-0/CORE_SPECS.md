@@ -529,19 +529,28 @@ const SENTIMENTS = ["positive", "neutral", "negative"];
 
 ### Credit Warning Banner
 
-The dashboard displays a unified warning banner when either response credits or sentiment credits are low (< 3) or exhausted (0).
+The dashboard displays a unified warning banner when either response credits or sentiment credits are low (≤20% remaining) or exhausted (0).
+
+**Threshold Logic:**
+- **Low:** ≤20% remaining (matches graph yellow threshold at 80% used)
+- **Out:** 0 remaining
+
+This percentage-based threshold ensures all tiers get proportional warning time:
+- FREE (15 credits): Warning at ≤3 credits
+- STARTER (30 credits): Warning at ≤6 credits
+- GROWTH (100 credits): Warning at ≤20 credits
 
 **Priority Matrix:**
 | Response Credits | Sentiment Credits | Banner Color | Title |
 |------------------|-------------------|--------------|-------|
-| OK (≥3) | OK (≥3) | None | No banner shown |
-| OK | Low (1-2) | Yellow | "Running Low on Sentiment Credits" |
-| Low (1-2) | OK | Yellow | "Running Low on Response Credits" |
+| OK (>20%) | OK (>20%) | None | No banner shown |
+| OK | Low (≤20%) | Yellow | "Running Low on Sentiment Credits" |
+| Low (≤20%) | OK | Yellow | "Running Low on Response Credits" |
 | OK | 0 | Yellow | "Out of Sentiment Credits" |
-| Low (1-2) | Low (1-2) | Yellow | "Running Low on Credits" |
+| Low (≤20%) | Low (≤20%) | Yellow | "Running Low on Credits" |
 | 0 | OK | Red | "Out of Response Credits" |
-| Low (1-2) | 0 | Red | "Out of Sentiment Credits" |
-| 0 | Low (1-2) | Red | "Out of Response Credits" |
+| Low (≤20%) | 0 | Red | "Out of Sentiment Credits" |
+| 0 | Low (≤20%) | Red | "Out of Response Credits" |
 | 0 | 0 | Red | "Out of Credits" |
 
 **Color Logic:**

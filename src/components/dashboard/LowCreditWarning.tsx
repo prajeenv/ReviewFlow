@@ -29,17 +29,26 @@ type WarningType =
   | "response_low_sentiment_out"
   | "both_out";
 
+// Threshold: warn when 80%+ used (i.e., 20% or less remaining)
+const LOW_THRESHOLD_PERCENT = 20;
+
 function getWarningState(
   responseCredits: number,
-  sentimentCredits: number | undefined
+  responseTotal: number,
+  sentimentCredits: number | undefined,
+  sentimentTotal: number | undefined
 ): { type: WarningType; isRed: boolean } {
-  const responseOk = responseCredits >= 3;
-  const responseLow = responseCredits > 0 && responseCredits < 3;
+  const responsePercent = responseTotal > 0 ? (responseCredits / responseTotal) * 100 : 0;
+  const responseOk = responsePercent > LOW_THRESHOLD_PERCENT;
+  const responseLow = responseCredits > 0 && responsePercent <= LOW_THRESHOLD_PERCENT;
   const responseOut = responseCredits === 0;
 
-  const sentimentOk = sentimentCredits === undefined || sentimentCredits >= 3;
+  const sentimentPercent = sentimentTotal && sentimentTotal > 0
+    ? ((sentimentCredits ?? 0) / sentimentTotal) * 100
+    : 100;
+  const sentimentOk = sentimentCredits === undefined || sentimentPercent > LOW_THRESHOLD_PERCENT;
   const sentimentLow =
-    sentimentCredits !== undefined && sentimentCredits > 0 && sentimentCredits < 3;
+    sentimentCredits !== undefined && sentimentCredits > 0 && sentimentPercent <= LOW_THRESHOLD_PERCENT;
   const sentimentOut = sentimentCredits !== undefined && sentimentCredits === 0;
 
   // Priority-based determination - Red when response credits = 0
@@ -94,7 +103,9 @@ export function LowCreditWarning({
 
   const { type: warningType, isRed } = getWarningState(
     creditsRemaining,
-    sentimentRemaining
+    creditsTotal,
+    sentimentRemaining,
+    sentimentTotal
   );
 
   // Don't show if no warning or dismissed
