@@ -326,10 +326,13 @@ export default function ReviewDetailPage() {
                 <TooltipProvider delayDuration={200}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="inline-flex items-center gap-1 text-sm text-muted-foreground cursor-help">
+                      <Badge
+                        variant="outline"
+                        className="text-muted-foreground cursor-help"
+                      >
                         Sentiment
-                        <AlertCircle className="h-4 w-4" />
-                      </span>
+                        <AlertCircle className="ml-1 h-3 w-3" />
+                      </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Sentiment analysis skipped - no credits</p>
