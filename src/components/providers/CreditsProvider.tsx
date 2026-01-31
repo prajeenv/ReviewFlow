@@ -6,6 +6,9 @@ interface CreditsContextType {
   credits: number;
   creditsTotal: number;
   creditsResetDate: string | null;
+  sentimentCredits: number;
+  sentimentTotal: number;
+  sentimentResetDate: string | null;
   tier: string;
   setCredits: (credits: number) => void;
   refreshCredits: () => Promise<void>;
@@ -18,6 +21,9 @@ interface CreditsProviderProps {
   initialCredits?: number;
   initialCreditsTotal?: number;
   initialCreditsResetDate?: string | null;
+  initialSentimentCredits?: number;
+  initialSentimentTotal?: number;
+  initialSentimentResetDate?: string | null;
   initialTier?: string;
 }
 
@@ -26,11 +32,17 @@ export function CreditsProvider({
   initialCredits = 0,
   initialCreditsTotal = 15,
   initialCreditsResetDate = null,
+  initialSentimentCredits = 0,
+  initialSentimentTotal = 35,
+  initialSentimentResetDate = null,
   initialTier = "FREE",
 }: CreditsProviderProps) {
   const [credits, setCreditsState] = useState(initialCredits);
   const [creditsTotal, setCreditsTotal] = useState(initialCreditsTotal);
   const [creditsResetDate, setCreditsResetDate] = useState<string | null>(initialCreditsResetDate);
+  const [sentimentCredits, setSentimentCredits] = useState(initialSentimentCredits);
+  const [sentimentTotal, setSentimentTotal] = useState(initialSentimentTotal);
+  const [sentimentResetDate, setSentimentResetDate] = useState<string | null>(initialSentimentResetDate);
   const [tier, setTier] = useState(initialTier);
 
   const setCredits = useCallback((newCredits: number) => {
@@ -45,6 +57,9 @@ export function CreditsProvider({
         setCreditsState(data.data.credits.remaining);
         setCreditsTotal(data.data.credits.total);
         setCreditsResetDate(data.data.credits.resetDate);
+        setSentimentCredits(data.data.sentiment.remaining);
+        setSentimentTotal(data.data.sentiment.total);
+        setSentimentResetDate(data.data.sentiment.resetDate);
         setTier(data.data.tier);
       }
     } catch (error) {
@@ -53,7 +68,7 @@ export function CreditsProvider({
   }, []);
 
   return (
-    <CreditsContext.Provider value={{ credits, creditsTotal, creditsResetDate, tier, setCredits, refreshCredits }}>
+    <CreditsContext.Provider value={{ credits, creditsTotal, creditsResetDate, sentimentCredits, sentimentTotal, sentimentResetDate, tier, setCredits, refreshCredits }}>
       {children}
     </CreditsContext.Provider>
   );
